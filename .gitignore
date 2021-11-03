@@ -1,0 +1,4 @@
+**/__pycache__
+src/emu/stages/c++/rasterizer/rasterizer
+src/emu/stages/c++/test_vertices/test_vertices
+src/emu/stages/c++/vertex_transform/vertex_transform
