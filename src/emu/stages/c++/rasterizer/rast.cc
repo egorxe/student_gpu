@@ -7,7 +7,9 @@
 
 #include <gpu_pipeline.hh> 
 
-float edgeFunction(const Vec3 &a, const Vec3 &b, const Vec3 &c) 
+#define PERSPECTIVE_CORRECT     1
+
+float edgeFunction(const Vec4 &a, const Vec4 &b, const Vec4 &c) 
 { 
     return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]); 
 } 
@@ -29,14 +31,6 @@ int32_t MaxCoord(float x0, float x1, float x2, int32_t lo, int32_t hi)
     else
         return std::min(max, hi);
 } 
-
-float InvertZ(float z)
-{
-    // check for zero
-    if (z < 1E-7 && z > -1E-7)
-        z = 1E-7;
-    return 1. / z;
-}
 
 int main(int argc, char **argv) 
 {
@@ -65,15 +59,15 @@ int main(int argc, char **argv)
 		}
         
         // Read input vertices & colors
-        float vertices[3*3];
+        float vertices[3*4];
         float colors[3*4];
         
         // three vertices per polygon
         for (int vertex = 0; vertex < 3; ++vertex)
         {
-            // three coords per vertex
-            for (int i = 0; i < 3; ++i)
-                vertices[vertex*3+i] = iofifo.ReadFromFifoFloat();
+            // four coords per vertex
+            for (int i = 0; i < 4; ++i)
+                vertices[vertex*4+i] = iofifo.ReadFromFifoFloat();
             
             // four color floats per vertex
             for (int i = 0; i < 4; ++i)
@@ -81,27 +75,21 @@ int main(int argc, char **argv)
         }
 
         // Polygon vertices
-        Vec3 v0, v1, v2;
-        for (int i = 0; i < 3; ++i)
+        Vec4 v0, v1, v2;
+        for (int i = 0; i < 4; ++i)
             v0[i] = vertices[0+i];
-        for (int i = 0; i < 3; ++i)
-            v1[i] = vertices[3+i];
-        for (int i = 0; i < 3; ++i)
-            v2[i] = vertices[6+i];
+        for (int i = 0; i < 4; ++i)
+            v1[i] = vertices[4+i];
+        for (int i = 0; i < 4; ++i)
+            v2[i] = vertices[8+i];
         
-        // Create colors
-        Vec3 c0 = {colors[0], colors[1], colors[2]}; 
-        Vec3 c1 = {colors[4], colors[5], colors[6]}; 
-        Vec3 c2 = {colors[8], colors[9], colors[10]};
-        
-        float area_inv = 1. / edgeFunction(v2, v1, v0); 
+        float area_inv = 1. / edgeFunction(v0, v1, v2); 
         bool back_face = false;
         
         if (area_inv < 0)
         {
             // back face
             back_face = true;
-            // ?may be needed to flip vertex colors?
         }
         
         // Calculate bounding box (min & max coords for triangle vertexes), if -1 - triangle is out of screen
@@ -112,19 +100,31 @@ int main(int argc, char **argv)
         
         if (xmin < 0 || ymin < 0 || xmax < 0 || ymax < 0) continue; // skip out-of-screen triangles
         
-        // Precompute reciprocal of vertex z-coordinate
-        v0[2] = InvertZ(v0[2]);
-        v1[2] = InvertZ(v1[2]);
-        v2[2] = InvertZ(v2[2]);
+        // Create colors 
+        #if PERSPECTIVE_CORRECT
+        //precompute reciprocal of vertex w clip coordinate
+        v0[3] = 1./v0[3];
+        v1[3] = 1./v1[3];
+        v2[3] = 1./v2[3];
+        
+        // divide colors on w coord in advance
+        Vec3 c0 = {colors[0]*v0[3], colors[1]*v0[3], colors[2]*v0[3]}; 
+        Vec3 c1 = {colors[4]*v1[3], colors[5]*v1[3], colors[6]*v1[3]}; 
+        Vec3 c2 = {colors[8]*v2[3], colors[9]*v2[3], colors[10]*v2[3]};
+        #else
+        Vec3 c0 = {colors[0], colors[1], colors[2]}; 
+        Vec3 c1 = {colors[4], colors[5], colors[6]}; 
+        Vec3 c2 = {colors[8], colors[9], colors[10]};
+        #endif
         
         for (uint32_t x = xmin; x < xmax; ++x) 
         { 
             for (uint32_t y = ymin; y < ymax; ++y) 
             { 
-                Vec3 p = {x + 0.5f, y + 0.5f, 0}; 
-                float w0 = edgeFunction(v1, v0, p); 
-                float w1 = edgeFunction(v0, v2, p); 
-                float w2 = edgeFunction(v2, v1, p); 
+                Vec4 p = {x + 0.5f, y + 0.5f, 0, 0}; 
+                float w0 = edgeFunction(v1, v2, p); 
+                float w1 = edgeFunction(v2, v0, p); 
+                float w2 = edgeFunction(v0, v1, p); 
                 
                 if (((w0 >= 0 && w1 >= 0 && w2 >= 0) && !back_face) ||
                    ((w0 <= 0 && w1 <= 0 && w2 <= 0) && back_face))
@@ -133,12 +133,20 @@ int main(int argc, char **argv)
                     w1 *= area_inv; 
                     w2 *= area_inv; 
                     
-                    float oneOverZ = v0[2] * w0 + v1[2] * w1 + v2[2] * w2;
-                    uint32_t z = (uint32_t)((1. / oneOverZ) * PIPELINE_MAX_Z);
+                    uint32_t z = (uint32_t)((v0[2] * w0 + v1[2] * w1 + v2[2] * w2) * PIPELINE_MAX_Z);
+
+                    // calculate pixel color
+                    #if PERSPECTIVE_CORRECT
+                    float wn = w0*v0[3] + w1*v1[3] + w2*v2[3];
                     
+                    float r = (w0 * c0[0] + w1 * c1[0] + w2 * c2[0]) / wn; 
+                    float g = (w0 * c0[1] + w1 * c1[1] + w2 * c2[1]) / wn; 
+                    float b = (w0 * c0[2] + w1 * c1[2] + w2 * c2[2]) / wn;
+                    #else
                     float r = w0 * c0[0] + w1 * c1[0] + w2 * c2[0]; 
                     float g = w0 * c0[1] + w1 * c1[1] + w2 * c2[1]; 
-                    float b = w0 * c0[2] + w1 * c1[2] + w2 * c2[2]; 
+                    float b = w0 * c0[2] + w1 * c1[2] + w2 * c2[2];
+                    #endif
 
                     iofifo.WriteFragment(x, y, z, r, g, b); 
                 } 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GLES/gl.h>
+#include <GL/glu.h>
 
 #ifdef USE_SDL
 #include <SDL2/SDL.h>
@@ -9,10 +10,8 @@ SDL_Window* sdl_window;
 #endif
 
 /* screen width, height, and bit depth */
-//#define SCREEN_WIDTH  640
-//#define SCREEN_HEIGHT 480
-#define SCREEN_WIDTH  512
-#define SCREEN_HEIGHT 512
+#define SCREEN_WIDTH  640
+#define SCREEN_HEIGHT 480
 #define SCREEN_BPP     32
 
 #include "model.h"
@@ -31,16 +30,13 @@ int initGLES()
 
     /* Enables culling */
     //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
+    //glCullFace(GL_BACK);
     
     /* Enables Depth Testing */
-    //glEnable( GL_DEPTH_TEST );
+    glEnable( GL_DEPTH_TEST );
 
     /* The Type Of Depth Test To Do */
     //glDepthFunc( GL_LEQUAL );
-
-    /* Really Nice Perspective Calculations */
-    //glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
     
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -54,7 +50,8 @@ int drawGLScene( GLvoid )
     /* Clear The Screen And The Depth Buffer */
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
-    //glColor4f(0.0, 0.0, 1.0, 0);  /* blue */
+    glRotatef(1.f, 1.0f, 1.0f, 1.0f);
+    
     glVertexPointer(3, GL_FLOAT, 0, vertices);
     glColorPointer(4, GL_FLOAT, 0, colors);
     
@@ -120,9 +117,21 @@ int main( int argc, char **argv )
 
     /* initialize OpenGL */
     initGLES();
-    glRotatef(45.f, 1.0f, 1.0f, 1.0f);
+    
+    // init projection
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, ((float)SCREEN_WIDTH)/SCREEN_HEIGHT, 0.1, 10);
+    //glTranslatef(0, 0, -3);
+    
+    // init model view
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslatef(0, 0, -3);
+    //glRotatef(45.f, 1.0f, 1.0f, 1.0f);
+    
     GLfloat matrix[16]; 
-    glGetFloatv (GL_MODELVIEW_MATRIX, matrix); 
+    glGetFloatv (GL_MODELVIEW_MATRIX, matrix);
     //glGetFloatv (GL_PROJECTION_MATRIX, matrix); 
     gl_print_matrix(matrix);
 

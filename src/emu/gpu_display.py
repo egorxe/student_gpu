@@ -21,8 +21,10 @@ class GpuDisplay():
         self.surface = self.window.get_surface()
         
     def PutPixel(self, pixel):
-        # put pixel to buffer
-        self.framebuffer[pixel[0]][pixel[1]] = pixel[2]
+        # put pixel to buffer (reverse Y axis from OpenGL style to SDL style)
+        # OpenGL puts coord origin to lower left corner but SDL to upper left
+        self.framebuffer[pixel[0]][self.size_y-1-pixel[1]] = pixel[2]
+        # self.framebuffer[pixel[0]][pixel[1]] = pixel[2]
     
     def ClearScreen(self):
         sdl2.ext.fill(self.surface, sdl2.ext.Color(0, 0, 0), (0, 0, self.size_x * COEF, self.size_y * COEF))  

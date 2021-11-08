@@ -18,10 +18,10 @@ int main(int argc, char **argv)
     const uint32_t SCREEN_HEIGHT    = atoi(argv[2]);
     
     // Fill depth buffer with some large vals
-    uint32_t depthBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
+    uint32_t depth_buffer[SCREEN_WIDTH*SCREEN_HEIGHT];
     for (int i = 0; i < SCREEN_WIDTH; ++i)
         for (int j = 0; j < SCREEN_HEIGHT; ++j)
-            depthBuffer[i*SCREEN_HEIGHT + j] = PIPELINE_MAX_Z;
+            depth_buffer[i*SCREEN_HEIGHT + j] = PIPELINE_MAX_Z;
         
     // Open input & output FIFOs
     IoFifo iofifo(argv[3], argv[4]);
@@ -37,7 +37,8 @@ int main(int argc, char **argv)
                 for (uint32_t y = 0; y < SCREEN_HEIGHT; ++y) 
                 { 
                     iofifo.WriteToFifo32((uint32_t)x | ((uint32_t)y) << 16); 
-                    iofifo.WriteToFifo32(((uint32_t)((PIPELINE_MAX_Z-depthBuffer[x*SCREEN_HEIGHT+y]) * 255. / PIPELINE_MAX_Z) << 16)); 
+                    uint32_t c = (uint32_t)((PIPELINE_MAX_Z-depth_buffer[x*SCREEN_HEIGHT+y]) * 255. / PIPELINE_MAX_Z);
+                    iofifo.WriteToFifo32((c << 16) | (c << 8) | c); 
                 }
             }
             #endif
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
             // fill depth buffer with some large vals on new frame
             for (int i = 0; i < SCREEN_WIDTH; ++i)
                 for (int j = 0; j < SCREEN_HEIGHT; ++j)
-                    depthBuffer[i*SCREEN_HEIGHT + j] = PIPELINE_MAX_Z;
+                    depth_buffer[i*SCREEN_HEIGHT + j] = PIPELINE_MAX_Z;
 			continue;
 		}
         
@@ -63,9 +64,9 @@ int main(int argc, char **argv)
         uint32_t z = fragment[2];
         
         // Depth buffer test
-        if (fragment[2] >= depthBuffer[fragment[0] * SCREEN_HEIGHT + fragment[1]]) 
+        if (z >= depth_buffer[x * SCREEN_HEIGHT + y]) 
             continue;
-        depthBuffer[fragment[0] * SCREEN_HEIGHT + fragment[1]] = fragment[2]; 
+        depth_buffer[x * SCREEN_HEIGHT + y] = z; 
         
         #if !DRAW_DEPTH_BUF
         iofifo.WriteToFifo32((uint32_t)x | ((uint32_t)y) << 16); 
