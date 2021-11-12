@@ -8,7 +8,7 @@
 #include <gpu_pipeline.hh> 
 #include <pipeline_cmd.h> 
 
-#define PERSPECTIVE_CORRECT     1
+#define PERSPECTIVE_CORRECT     0
 
 M4 model_matrix;
 M4 proj_matrix;

@@ -17,7 +17,11 @@ def ExceptHook(type, value, tb):
     
 ################ MAIN ###############
 
-JSON_CONFIG = "gpu_config.json"
+if len(sys.argv) > 1:
+    JSON_CONFIG = sys.argv[1]
+else:
+    JSON_CONFIG = "gpu_config.json"
+
 
 # open config file
 try:
