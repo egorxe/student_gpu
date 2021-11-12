@@ -13,6 +13,7 @@ function ToChar (slv8 : std_logic_vector (7 downto 0)) return character;
 procedure WriteFloat(file f : BinaryFile; x : float32);
 procedure ReadFloat(file f : BinaryFile; x : out float32);
 procedure WriteUint32(file f : BinaryFile; v : std_logic_vector(31 downto 0));
+procedure ReadUint32(file f : BinaryFile; v : out vec32);
 
 end file_helper_pkg;
 
