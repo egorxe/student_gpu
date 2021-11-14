@@ -87,7 +87,7 @@ class IoFifo
     // Write fragment from rasterizer
     void WriteFragment(uint32_t x, uint32_t y, uint32_t z, float r, float g, float b)
     {
-        WriteToFifo32(GPU_PIPELINE_FRAGMENT); 
+        WriteToFifo32(GPU_PIPE_CMD_FRAGMENT); 
         WriteToFifo32(x); 
         WriteToFifo32(y); 
         WriteToFifo32(z); 

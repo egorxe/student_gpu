@@ -29,8 +29,8 @@ int main(int argc, char **argv)
     while (1)
     {
         uint32_t cmd = iofifo.ReadFromFifo32();
-        if (cmd != GPU_PIPELINE_FRAGMENT)
-		{
+        if (cmd != GPU_PIPE_CMD_FRAGMENT)
+        {
             #if DRAW_DEPTH_BUF
             for (uint32_t x = 0; x < SCREEN_WIDTH; ++x) 
             { 
@@ -43,8 +43,8 @@ int main(int argc, char **argv)
             }
             #endif
             
-			// just pass to next stage everything but fragment ops
-			iofifo.WriteToFifo32(cmd);
+            // just pass to next stage everything but fragment ops
+            iofifo.WriteToFifo32(cmd);
             iofifo.WriteToFifo32(0);
             iofifo.Flush();
             
@@ -52,8 +52,8 @@ int main(int argc, char **argv)
             for (int i = 0; i < SCREEN_WIDTH; ++i)
                 for (int j = 0; j < SCREEN_HEIGHT; ++j)
                     depth_buffer[i*SCREEN_HEIGHT + j] = PIPELINE_MAX_Z;
-			continue;
-		}
+            continue;
+        }
         
         // Read input fragments
         uint32_t fragment[4];

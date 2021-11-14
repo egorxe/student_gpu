@@ -70,7 +70,7 @@ begin
                 stb     <= '1';
                 
                 if (new_frame = '1') then
-                    data_o <= GPU_PIPELINE_POLY_VERTEX;
+                    data_o <= GPU_PIPE_CMD_POLY_VERTEX;
                     new_frame := '0';
                 else
                     if coord /= NCOORDS then
@@ -87,7 +87,7 @@ begin
                             stb <= '0';
                         else
                             vert := 0;
-                            data_o <= GPU_PIPELINE_FRAME_END;
+                            data_o <= GPU_PIPE_CMD_FRAME_END;
                             new_frame := '1';
                         end if;
                     end if;

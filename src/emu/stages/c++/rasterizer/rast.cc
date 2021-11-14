@@ -49,14 +49,14 @@ int main(int argc, char **argv)
     while (1)
     {
         uint32_t cmd = iofifo.ReadFromFifo32();
-        if (cmd != GPU_PIPELINE_POLY_VERTEX)
-		{
-			// just pass to next stage everything but polygon vertices
-			iofifo.WriteToFifo32(cmd);
+        if (cmd != GPU_PIPE_CMD_POLY_VERTEX)
+        {
+            // just pass to next stage everything but polygon vertices
+            iofifo.WriteToFifo32(cmd);
             iofifo.WriteToFifo32(0);
             iofifo.Flush();
-			continue;
-		}
+            continue;
+        }
         
         // Read input vertices & colors
         float vertices[3*4];

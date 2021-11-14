@@ -8,11 +8,11 @@ typedef float Vec4[4];
 typedef unsigned char Rgb[3]; 
 
 struct M4 {
-	float m[4][4];
+    float m[4][4];
 };
 
 typedef struct {
-	float v[4];
+    float v[4];
 } V4;
 
 #define PIPELINE_MAX_Z      (1<<16)

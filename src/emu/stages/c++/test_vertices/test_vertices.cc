@@ -24,7 +24,7 @@ int main(int argc, char **argv)
         {
             // Add command: polygon vertex
             if ((vertex % 3) == 0)
-	            iofifo.WriteToFifo32(GPU_PIPELINE_POLY_VERTEX);
+                iofifo.WriteToFifo32(GPU_PIPE_CMD_POLY_VERTEX);
             
             // three coords per vertex
             for (int i = 0; i < 3; ++i)
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         }
         
         // Add command: mark frame end
-        iofifo.WriteToFifo32(GPU_PIPELINE_FRAME_END);
+        iofifo.WriteToFifo32(GPU_PIPE_CMD_FRAME_END);
         iofifo.Flush();
     }
  

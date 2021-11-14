@@ -2,3 +2,6 @@
 src/emu/stages/c++/rasterizer/rasterizer
 src/emu/stages/c++/test_vertices/test_vertices
 src/emu/stages/c++/vertex_transform/vertex_transform
+src/emu/stages/c++/fragment_ops/fragment_ops
+*.fifo
+*.o
