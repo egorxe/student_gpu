@@ -32,56 +32,56 @@ void gl_M4_MulV4(Vec4 a, M4* b, Vec4 c)
 
 void gl_M4_MulLeft(M4* c, M4* b) 
 {
-	int i, j, k;
-	float s;
-	M4 a;
+    int i, j, k;
+    float s;
+    M4 a;
 
-	a = *c;
-	for (i = 0; i < 4; i++)
-		for (j = 0; j < 4; j++) {
-			s = 0.0;
-			for (k = 0; k < 4; k++)
-				s += a.m[i][k] * b->m[k][j];
-			c->m[i][j] = s;
-		}
+    a = *c;
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 4; j++) {
+            s = 0.0;
+            for (k = 0; k < 4; k++)
+                s += a.m[i][k] * b->m[k][j];
+            c->m[i][j] = s;
+        }
 }
 
 void gl_M4_Transpose(M4* a, M4* b) 
 {
     M4 tmp;
-	{
-		tmp.m[0][0] = b->m[0][0];
-		tmp.m[0][1] = b->m[1][0];
-		tmp.m[0][2] = b->m[2][0];
-		tmp.m[0][3] = b->m[3][0];
+    {
+        tmp.m[0][0] = b->m[0][0];
+        tmp.m[0][1] = b->m[1][0];
+        tmp.m[0][2] = b->m[2][0];
+        tmp.m[0][3] = b->m[3][0];
 
-		tmp.m[1][0] = b->m[0][1];
-		tmp.m[1][1] = b->m[1][1];
-		tmp.m[1][2] = b->m[2][1];
-		tmp.m[1][3] = b->m[3][1];
+        tmp.m[1][0] = b->m[0][1];
+        tmp.m[1][1] = b->m[1][1];
+        tmp.m[1][2] = b->m[2][1];
+        tmp.m[1][3] = b->m[3][1];
 
-		tmp.m[2][0] = b->m[0][2];
-		tmp.m[2][1] = b->m[1][2];
-		tmp.m[2][2] = b->m[2][2];
-		tmp.m[2][3] = b->m[3][2];
+        tmp.m[2][0] = b->m[0][2];
+        tmp.m[2][1] = b->m[1][2];
+        tmp.m[2][2] = b->m[2][2];
+        tmp.m[2][3] = b->m[3][2];
 
-		tmp.m[3][0] = b->m[0][3];
-		tmp.m[3][1] = b->m[1][3];
-		tmp.m[3][2] = b->m[2][3];
-		tmp.m[3][3] = b->m[3][3];
-	}
+        tmp.m[3][0] = b->m[0][3];
+        tmp.m[3][1] = b->m[1][3];
+        tmp.m[3][2] = b->m[2][3];
+        tmp.m[3][3] = b->m[3][3];
+    }
     *a = tmp;
 }
 
 void glRotate(float angle, float x, float y, float z) 
 {
-	float u[3];
+    float u[3];
     M4 m;
 
-	angle = angle * M_PI / 180.0;
-	u[0] = x;
-	u[1] = y;
-	u[2] = z;
+    angle = angle * M_PI / 180.0;
+    u[0] = x;
+    u[1] = y;
+    u[2] = z;
 
     float cost, sint;
 
@@ -125,7 +125,7 @@ void glRotate(float angle, float x, float y, float z)
     m.m[1][2] = y*z*t-x*s;
     m.m[2][2] = z*z*t+c;
 
-	//gl_M4_Transpose(&m, &m);
+    //gl_M4_Transpose(&m, &m);
     gl_M4_MulLeft(&model_matrix, &m);
     //gl_M4_Transpose(&model_matrix, &model_matrix);
 }

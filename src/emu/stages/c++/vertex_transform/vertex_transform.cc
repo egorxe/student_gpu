@@ -108,15 +108,15 @@ int main(int argc, char **argv)
     while (1)
     {
         uint32_t cmd = iofifo.ReadFromFifo32();
-        if (cmd != GPU_PIPELINE_POLY_VERTEX)
-		{
-			// just pass to next stage everything but polygon vertices
-			iofifo.WriteToFifo32(cmd);
+        if (cmd != GPU_PIPE_CMD_POLY_VERTEX)
+        {
+            // just pass to next stage everything but polygon vertices
+            iofifo.WriteToFifo32(cmd);
             iofifo.Flush();
             // ! rotate 2 degrees on each frame for test !
-			glRotate(2, 1, 1, 1);
-			continue;
-		}
+            glRotate(2, 1, 1, 1);
+            continue;
+        }
         
         // Read input vertices & colors
         float vertices[3*3];
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
         ProcessVertex(vertices+6, v2, SCREEN_WIDTH, SCREEN_HEIGHT);
         
         // Pass resulting vertices to next stage
-        iofifo.WriteToFifo32(GPU_PIPELINE_POLY_VERTEX);
+        iofifo.WriteToFifo32(GPU_PIPE_CMD_POLY_VERTEX);
         WriteVertexToFifo(iofifo, v0, &colors[0]);
         WriteVertexToFifo(iofifo, v1, &colors[4]);
         WriteVertexToFifo(iofifo, v2, &colors[8]);
