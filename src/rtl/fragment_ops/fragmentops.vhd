@@ -21,43 +21,50 @@ entity fragment_ops is
 end fragment_ops;
 
 architecture core of fragment_ops is
-type buff is array (0 to SCREEN_WIDTH*SCREEN_HEIGHT) of vec32;  
-signal depth_buffer : buff;
-
 begin
   process
   file f_out          : BinaryFile;
   file f_in           : BinaryFile;
-  variable data_out   : vec32;
-  variable c          : vec32;
+  variable cmd        : vec32 := ZERO32;
+  -- variable data_out   : vec32 := ZERO32;
+  variable x          : vec32 := ZERO32;
+  variable y          : vec32 := ZERO32;
+  variable z          : vec32 := ZERO32;
+  variable color      : vec32 := ZERO32;
+  type buff is array (0 to SCREEN_WIDTH*SCREEN_HEIGHT) of vec32;  
+  variable depth_buffer : buff;
+  -- variable c          : vec32;
   begin
     file_open(f_out, OUT_FIFO_NAME, WRITE_MODE);
-    file_open(f_in, IN_FIFO_NAME, READ_MODE);
+    file_open(f_in,  IN_FIFO_NAME,  READ_MODE);
     for i in 0 to SCREEN_WIDTH-1 loop
       for j in 0 to SCREEN_HEIGHT-1 loop
-        depth_buffer((i * SCREEN_HEIGHT + j)) <= PIPELINE_MAX_Z;
+        depth_buffer(i * SCREEN_HEIGHT + j) := PIPELINE_MAX_Z;
       end loop; -- for j in 0 to SCREEN_HEIGHT        
     end loop; -- for i in 0 to SCREEN_WIDTH
     while true loop
-      ReadUint32(f_in, data_out);
-      if DRAW_DEPTH_BUF then
-        for x in 0 to SCREEN_WIDTH-1 loop
-          for y in 0 to SCREEN_HEIGHT-1 loop
-            -- data_out := to_vec32(x) or (to_vec32(y) sll 16);
-            -- WriteUint32(f_out, data_out);
-            c := (PIPELINE_MAX_Z - depth_buffer((x * SCREEN_HEIGHT + y)));
-            -- data_out := (c sll 16) or (c sll 8) or c;
-            -- WriteUint32(f_out, data_out);
+      ReadUint32(f_in, cmd);
+      if not(cmd = X"FFFFFF02") then
+        WriteUint32(f_out, cmd);
+        WriteUint32(f_out, ZERO32);
+        for i in 0 to SCREEN_WIDTH-1 loop
+          for j in 0 to SCREEN_HEIGHT-1 loop
+            depth_buffer(i * SCREEN_HEIGHT + j) := PIPELINE_MAX_Z;
           end loop; -- for j in 0 to SCREEN_HEIGHT        
         end loop; -- for i in 0 to SCREEN_WIDTH
+        next;
       end if;
-      
-      --  for i in 0 to SCREEN_WIDTH loop
-      --   for j in 0 to SCREEN_HEIGHT loop
-
-      --   end loop; -- for j in 0 to SCREEN_HEIGHT        
-      --  end loop; -- for i in 0 to SCREEN_WIDTH
-      WriteUint32(f_out, data_out);
+      ReadUint32(f_in, x);
+      ReadUint32(f_in, y);
+      ReadUint32(f_in, z);
+      ReadUint32(f_in, color);
+      -- report to_hstring(x) &" "& to_hstring(y) &" "& to_hstring(z) &" "& to_hstring(color);
+      if z >= depth_buffer(to_uint(x) * SCREEN_HEIGHT + to_uint(y)) then
+        next;
+      end if;
+      depth_buffer(to_sint(x) * SCREEN_HEIGHT + to_sint(y)) := z;
+      WriteUint32(f_out, x or (y sll 16));
+      WriteUint32(f_out, color);
     end loop;
 
   end process;

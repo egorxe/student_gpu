@@ -4,7 +4,7 @@
 
 #include <gpu_pipeline.hh> 
 
-#define DRAW_DEPTH_BUF  1
+#define DRAW_DEPTH_BUF  0
 
 int main(int argc, char **argv) 
 {
@@ -64,6 +64,7 @@ int main(int argc, char **argv)
         uint32_t z = fragment[2];
         
         // Depth buffer test
+        printf("%i %i %i\n", x, y, z);
         if (z >= depth_buffer[x * SCREEN_HEIGHT + y]) 
             continue;
         depth_buffer[x * SCREEN_HEIGHT + y] = z; 
