@@ -12,7 +12,7 @@ type BinaryFile is file of character;
 function ToChar (slv8 : std_logic_vector (7 downto 0)) return character;
 procedure WriteFloat(file f : BinaryFile; x : float32);
 procedure ReadFloat(file f : BinaryFile; x : out float32);
-procedure WriteUint32(file f : BinaryFile; v : vec32);
+procedure WriteUint32(file f : BinaryFile; constant v : vec32);
 procedure ReadUint32(file f : BinaryFile; v : out vec32);
 
 end file_helper_pkg;
@@ -34,7 +34,7 @@ begin
     return character'val(temp);
 end ToChar;
 
-procedure WriteUint32(file f : BinaryFile; v : vec32) is 
+procedure WriteUint32(file f : BinaryFile; constant v : vec32) is 
 begin
     write(f, ToChar(v(7 downto 0)));
     write(f, ToChar(v(15 downto 8)));

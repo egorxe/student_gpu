@@ -39,6 +39,8 @@ subtype vec32 is std_logic_vector(31 downto 0);
 -- Pipeline commands
 constant GPU_PIPE_CMD_POLY_VERTEX   : vec32 := X"FFFFFF00";
 constant GPU_PIPE_CMD_FRAME_END     : vec32 := X"FFFFFF01";
+constant GPU_PIPE_CMD_FRAGMENT    : vec32 := X"FFFFFF02";
+
 
 
 ------------------------------------------------------------------------
