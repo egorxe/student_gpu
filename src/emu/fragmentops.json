@@ -17,12 +17,12 @@
             "binary"    : "stages/c++/rasterizer/rasterizer"
         },
         {
-            "name"      : "Fragment operations rtl",
-            "binary"    : "stages/rtl/fragment_ops/ghdl_sim/stage_sim.sh"
-        },
-        {
             "name"      : "Fragment operations",
             "binary"    : "stages/c++/fragment_ops/fragment_ops"
+        },
+        {
+            "name"      : "Fragment operations rtl",
+            "binary"    : "stages/rtl/fragment_ops/ghdl_sim/stage_sim.sh"
         }
     ]
 }

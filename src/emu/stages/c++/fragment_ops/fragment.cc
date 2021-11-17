@@ -4,7 +4,7 @@
 
 #include <gpu_pipeline.hh> 
 
-#define DRAW_DEPTH_BUF  0
+#define DRAW_DEPTH_BUF  1
 
 int main(int argc, char **argv) 
 {
