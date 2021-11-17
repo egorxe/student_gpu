@@ -49,6 +49,8 @@ function tf(x : real) return float32;                                   -- alias
 function to_slv(a : integer; size : natural) return std_logic_vector;   -- integer->std_logic_vector
 function to_vec32(a : integer) return std_logic_vector;                 -- integer->std_logic_vector 32 bit
 function zero_vec(size : integer) return std_logic_vector;              -- create vector of all zeroes
+function to_uint(a : std_logic_vector) return integer;                  -- std_logic_vector->unsigned integer
+function to_sint(a : std_logic_vector) return integer;                  -- std_logic_vector->signed integer
 
 end gpu_pkg;
 
@@ -79,5 +81,14 @@ begin
     return to_slv(0, size);
 end;
 
+function to_uint(a : std_logic_vector) return integer is
+begin
+    return to_integer(unsigned(a));
+end;
+
+function to_sint(a : std_logic_vector) return integer is
+begin
+    return to_integer(signed(a));
+end;
 
 end gpu_pkg;
