@@ -64,7 +64,6 @@ int main(int argc, char **argv)
         uint32_t z = fragment[2];
         
         // Depth buffer test
-        printf("%i %i %i\n", x, y, z);
         if (z >= depth_buffer[x * SCREEN_HEIGHT + y]) 
             continue;
         depth_buffer[x * SCREEN_HEIGHT + y] = z; 
