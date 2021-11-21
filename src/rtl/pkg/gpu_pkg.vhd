@@ -20,7 +20,7 @@ package gpu_pkg is
 ---------------------------- CONSTANTS ---------------------------------
 ------------------------------------------------------------------------
 
--- General usefull constants
+-- General useful constants
 constant ZF     : float32 := to_float(0);
 constant ZERO32 : std_logic_vector(31 downto 0) := (others => '0');
 
