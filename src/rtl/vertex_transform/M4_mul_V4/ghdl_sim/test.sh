@@ -5,7 +5,8 @@ set -e
 # Write your sources here (order is resolved automaticaly)
 TOP="M4_mul_V4_tb"
 SOURCES_BASEPATH=".."
-SOURCES="fpu100.vhd M4_mul_V4_pack.vhd M4_mul_V4.vhd M4_mul_V4_tb.vhd"
+SOURCES="../../pkg/*.vhd *.vhd"
+#"fpu100.vhd M4_mul_V4_pack.vhd M4_mul_V4.vhd M4_mul_V4_tb.vhd"
 
 # Some generic defines
 export TIME="1us"

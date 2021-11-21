@@ -3,7 +3,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 
 library work;
-use work.M4_mul_V4_pack.all;
+use work.gpu_pkg.all;
 use work.fpupack.all;
 
 entity M4_mul_V4 is

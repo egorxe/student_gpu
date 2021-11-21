@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Sun Nov  7 18:18:47 2021
--- Last update : Mon Nov 15 17:32:18 2021
+-- Last update : Sun Nov 21 22:01:21 2021
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.M4_mul_V4_pack.all;
+use work.gpu_pkg.all;
 
 -----------------------------------------------------------
 
