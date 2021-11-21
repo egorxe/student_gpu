@@ -3,11 +3,11 @@
 set -e
 
 # Write your sources here (order is resolved automaticaly)
-TOP="fragment_ops"
+TOP="rasterisator_tb"
 SOURCES_BASEPATH=".."
 #SOURCES="test_vertices.vhd test_vertices_fifotb.vhd"
-SOURCES="fragmentops.vhd"
-PACKAGES="gpu_pkg.vhd file_helper_pkg.vhd"
+SOURCES="*.vhd"
+PACKAGES="file_helper_pkg.vhd gpu_pkg.vhd"
 
 # Some generic defines
 export TIME="100000ms"

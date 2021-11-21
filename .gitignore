@@ -9,3 +9,6 @@ src/rtl/test_vertices/ghdl_sim/test_vertices_fifotb
 *.o
 *.fifo
 *.cf
+*.toml
+*.ghw
+.vscode

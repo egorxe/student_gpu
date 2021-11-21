@@ -79,14 +79,14 @@ begin
     variable y : float32;
     variable z : float32;
 
-    variable r : float32;
-    variable g : float32;
-    variable b : float32;
+    variable r : vec32;
+    variable g : vec32;
+    variable b : vec32;
 
-    variable y_max : integer;
-    variable y_min : integer;
-    variable x_max : integer;
-    variable x_min : integer;
+    variable y_max : float32;
+    variable y_min : float32;
+    variable x_max : float32;
+    variable x_min : float32;
 
     variable x_b : bound;
     variable y_b : bound;
@@ -100,8 +100,9 @@ begin
     variable c2 : vec4;
     
     variable p : vec4;
+    variable cmd : vec32;
     
-    variable pipline_max_z : float32 := to_float(100000000);
+    variable pipline_max_z : float32 := to_float(to_vec32(2**16));
     
     begin
     
@@ -110,6 +111,14 @@ begin
         report "F_in was opened";
         
     while not endfile(f_in) loop
+        
+        ReadUint32(f_in, cmd);
+        if cmd /= GPU_PIPE_CMD_POLY_VERTEX then
+            WriteUint32(f_out, cmd);
+            WriteUint32(f_out, zero32);
+            report "New frame";
+
+        else
         
         ReadFloat(f_in, v0(0));
         ReadFloat(f_in, v0(1));
@@ -155,19 +164,23 @@ begin
         else
             x_max := v1(0);
             x_min := v0(0);
+        end if;
             
         if v2(0) > x_max then
             x_max := v2(0);
+        end if;
             
         if v2(0) < x_min then 
             x_min := v2(0);
+        end if;
             
         if x_max > max_width then
             x_max := max_width;
+        end if;
             
-        if x_min < 0 then
-            x_min := 0;
-            
+        if x_min < 0.0 then
+            x_min := to_float(0.0);
+        end if;
 
         
         
@@ -178,17 +191,22 @@ begin
         else
             y_max := v1(1);
             y_min := v0(1);
+        end if;
             
         if v2(1) > y_max then
             y_max := v2(1);
+        end if;
             
         if v2(1) < y_min then
             y_min := v2(1);
+        end if;
         
-        if y_max > max_height then
-            y_max := max_height;
-        if y_min < 0 then
-            y_min := 0;    
+        if y_max > max_heigh then
+            y_max := max_heigh;
+        end if;
+        if y_min < 0.0 then
+            y_min := to_float(0.0);  
+        end if;
         
             
         
@@ -234,15 +252,15 @@ begin
 --        end loop;
 
         
-        if (x_max >= 0) and (y_max >= 0) and (x_min <= max_width) and (y_min <= max_height) then
+        if (x_max >= 0) and (y_max >= 0) and (x_min <= max_width) and (y_min <= max_heigh) then
         
         
-        report integer'image(x_min)&" "&integer'image(x_max)&" "&integer'image(y_min)&" "&integer'image(y_max);
+        --report integer'image(x_min)&" "&integer'image(x_max)&" "&integer'image(y_min)&" "&integer'image(y_max);
         
         report "max and min have been founded";
         
-        for i in x_min to x_max loop  --как преобразовать к integer?
-            for j in y_min to y_max loop
+        for i in to_uint(x_min) to to_uint(x_max) loop  --как преобразовать к integer?
+            for j in to_uint(y_min) to to_uint(y_max) loop
                 p(0) := i + to_float(0.5);   --what is f in c++ code?
                 p(1) := j + to_float(0.5);
                 p(2) := to_float(0.0);
@@ -260,28 +278,27 @@ begin
                     w1 := w1 * area_inv;
                     w2 := w2 * area_inv;
                     
-                    z := (v0(2) * w0 + v1(2) * w1 + v2(2) * w2) * PIPLINE_MAX_Z;   --What is PIPLINE_MAX_Z?
+                    z := (v0(2) * w0 + v1(2) * w1 + v2(2) * w2) * PIPLINE_MAX_Z; 
                     wn := w0 * v0(3) + w1 * v1(3) + w2 * v2(3);
                     
-                    report integer'image(i)&" "&integer'image(j);
+                    --report integer'image(i)&" "&integer'image(j);
                     
-                    r := w0 * c0(0) + w1 * c1(0) + w2 * c2(0);
-                    g := w0 * c0(1) + w1 * c1(1) + w2 * c2(1);
-                    b := w0 * c0(2) + w1 * c1(2) + w2 * c2(2);
+                    r := to_vec32((w0 * c0(0) + w1 * c1(0) + w2 * c2(0)) * 255);
+                    g := to_vec32((w0 * c0(1) + w1 * c1(1) + w2 * c2(1)) * 255);
+                    b := to_vec32((w0 * c0(2) + w1 * c1(2) + w2 * c2(2)) * 255);
        
-                    
-                    WriteFloat(f_out, to_float(i));
-                    WriteFloat(f_out, to_float(j));
-                    WriteFloat(f_out, z);
-                    WriteFloat(f_out, r);
-                    WriteFloat(f_out, g);
-                    WriteFloat(f_out, b);
-                    
+                    WriteUint32(f_out, GPU_PIPE_CMD_FRAGMENT);
+                    WriteUint32(f_out, to_vec32(i));
+                    WriteUint32(f_out, to_vec32(j));
+                    WriteUint32(f_out, to_vec32(0));
+                    WriteUint32(f_out, "00000000" & r(7 downto 0) & g(7 downto 0) & b(7 downto 0));
+                    --WriteUint32(f_out, "00000000" & "11111111" & "11111111" & "11111111");
                     
               
                 end if;
             end loop;
         end loop;
+        end if;
         end if;
     end loop;
                 
