@@ -17,4 +17,4 @@ for s in $SOURCES ; do
     DIRSOURCES+="$SOURCES_BASEPATH/$s "
 done
 
-TOP=$TOP ./ghdl_mod.sh $DIRSOURCES
+TOP=$TOP ghdl.sh $DIRSOURCES
