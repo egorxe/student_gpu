@@ -88,6 +88,9 @@ architecture rtl of M4_mul_V4 is
 		return intToSVec(0, vecLength);
 	end function;
 
+	type V2 is array (0 to 1) of vec32;
+    type M42 is array (0 to 3) of V2;
+
 	type reg_type is record
 		products_busy, sums_12_34_busy, sums_all_busy, set_i, start_i, result_ready : std_logic;
 		products_ready                                                              : std_logic_vector(15 downto 0);

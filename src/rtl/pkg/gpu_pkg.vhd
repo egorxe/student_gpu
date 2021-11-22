@@ -23,6 +23,9 @@ package gpu_pkg is
     -- General useful constants
     constant ZF        : float32                       := to_float(0);
     constant ZERO32    : std_logic_vector(31 downto 0) := (others => '0');
+    constant NCOORDS   : integer                       := 3;
+    constant NCOLORS   : integer                       := 4;
+    constant NVERTICES : integer                       := 3;
 
     ------------------------------------------------------------------------
     ------------------------------ TYPES -----------------------------------
@@ -31,8 +34,6 @@ package gpu_pkg is
     subtype vec32 is std_logic_vector(31 downto 0);
     type V4 is array (0 to 3) of vec32;
     type M44 is array (0 to 3) of V4;
-    type V2 is array (0 to 1) of vec32;
-    type M42 is array (0 to 3) of V2;
     type FV4 is array (0 to 3) of float32;
     type FM44 is array (0 to 3) of FV4;
 

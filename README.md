@@ -56,6 +56,10 @@ make && ./gpu_emu.py gpu_config.json
 | Тип           | Описание
 |---------------|-------------------------------------------|
 | vec32         | std_logic_vector(31 downto 0)             |
+| V4            | is array (0 to 3) of vec32;               |
+| M44           | is array (0 to 3) of V4;                  |
+| FV4           | is array (0 to 3) of float32;             |
+| FM44          | is array (0 to 3) of FV4;                 |
 
 
 ### Константы
