@@ -1,0 +1,24 @@
+{
+    "display_size_x"    : 640,
+    "display_size_y"    : 480,
+    "input_file"        : "",
+    "stages"            :
+    [
+        {
+            "name"      : "Test vertices generator",
+            "binary"    : "stages/c++/test_vertices/test_vertices"
+        },
+        {
+            "name"      : "Matrix vertex transformation",
+            "binary"    : "stages/rtl/vertex_transform/ghdl_sim/stage_sim.sh"
+        },
+        {
+            "name"      : "Rasterizer",
+            "binary"    : "stages/c++/rasterizer/rasterizer"
+        },
+        {
+            "name"      : "Fragment operations",
+            "binary"    : "stages/c++/fragment_ops/fragment_ops"
+        }
+    ]
+}
