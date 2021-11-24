@@ -95,9 +95,9 @@ architecture rtl of vertex_transform is
 	end function;
 
 	constant model_matrix : M44 := (
-			(to_slv(tf(1.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0))),
-			(to_slv(tf(0.0)), to_slv(tf(1.0)), to_slv(tf(0.0)), to_slv(tf(0.0))),
-			(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)), to_slv(tf(-3.0))),
+			(to_slv(tf(0.804738)), to_slv(tf(-0.310617)), to_slv(tf(0.505879)), to_slv(tf(0.0))),
+			(to_slv(tf(0.505879)), to_slv(tf(0.804738)), to_slv(tf(-0.310617)), to_slv(tf(0.0))),
+			(to_slv(tf(-0.310617)), to_slv(tf(0.505879)), to_slv(tf(0.804738)), to_slv(tf(-3.0))),
 			(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)))
 		);
 
