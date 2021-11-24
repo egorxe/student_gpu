@@ -2,6 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.float_pkg.all;
+use std.textio.all;
+use ieee.std_logic_textio.all;
 
 library work;
 --use work.fpupack.all;
@@ -254,6 +256,10 @@ begin
 								write_o <= '1';
 								if (data_i = GPU_PIPE_CMD_POLY_VERTEX) then
 									var.reading_vertex_data := '1';
+									report "\n";
+								end if;
+								if (data_i = GPU_PIPE_CMD_FRAME_END) then
+									report "End of frame \n";
 								end if;
 
 							else
@@ -382,6 +388,10 @@ begin
 
 					if (reg.vertex_data_counter < NCOORDS + 1) then
 						data_o <= reg.w_coords(reg.vertex_data_counter);
+						report (real'image(to_real(to_float(reg.w_coords(reg.vertex_data_counter)))) & " ");
+						if (reg.vertex_data_counter = NCOORDS) then
+							report "\n";
+						end if;
 					elsif (reg.vertex_data_counter < NCOORDS + 1 + NCOLORS) then
 						data_o <= reg.colors(reg.vertex_data_counter - NCOORDS - 1);
 					end if;
