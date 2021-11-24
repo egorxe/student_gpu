@@ -8,7 +8,7 @@
 #include <gpu_pipeline.hh> 
 #include <pipeline_cmd.h> 
 
-#define PERSPECTIVE_CORRECT     0
+#define PERSPECTIVE_CORRECT     1
 
 M4 model_matrix;
 M4 proj_matrix;
@@ -56,6 +56,14 @@ void WriteVertexToFifo(IoFifo &iofifo, Vec4 &v, float *colors)
         iofifo.WriteToFifoFloat(colors[i]);
 }
 
+void gl_print_matrix(M4 m) {
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		printf("%f %f %f %f\n", m.m[i][0], m.m[i][1], m.m[i][2], m.m[i][3]);
+	}
+}
+
 int main(int argc, char **argv) 
 {
     if (argc != 5)
@@ -73,10 +81,16 @@ int main(int argc, char **argv)
     // Create matrixes
     #if PERSPECTIVE_CORRECT
     // position on coordinate 3 on Z axis
+    //model_matrix = {{
+        //{1,         0,          0,          0           },
+        //{0,         1,          0,          0           },
+        //{0,         0,          1,          -3.0        },  
+        //{0,         0,          0,          1           },
+    //}};
     model_matrix = {{
-        {1,         0,          0,          0           },
-        {0,         1,          0,          0           },
-        {0,         0,          1,          -3.0        },  
+        {0.804738,  -0.310617,  0.505879,   0           },
+        {0.505879,  0.804738,   -0.310617,  0           },
+        {-0.310617, 0.505879,   0.804738,   -3.0        },  
         {0,         0,          0,          1           },
     }};
     // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
@@ -104,6 +118,7 @@ int main(int argc, char **argv)
     
     // !static rotate on 45 degrees for test!
     //glRotate(45, 1, 1, 1);
+    gl_print_matrix(model_matrix);
     
     while (1)
     {
@@ -114,7 +129,7 @@ int main(int argc, char **argv)
             iofifo.WriteToFifo32(cmd);
             iofifo.Flush();
             // ! rotate 2 degrees on each frame for test !
-            glRotate(2, 1, 1, 1);
+            //glRotate(2, 1, 1, 1);
             continue;
         }
         
