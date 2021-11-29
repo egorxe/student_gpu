@@ -80,28 +80,20 @@ int main(int argc, char **argv)
     
     // Create matrixes
     #if PERSPECTIVE_CORRECT
-    // // position on coordinate 3 on Z axis
-    // model_matrix = {{
-    //     {1,         0,          0,          0           },
-    //     {0,         1,          0,          0           },
-    //     {0,         0,          1,          -3.0        },  
-    //     {0,         0,          0,          1           },
-    // }};
-    // // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
-    // proj_matrix = {{
-    //     {1.810660,  0,          0,          0           },
-    //     {0,         2.414214,   0,          0           },
-    //     {0,         0,          -1.020202,  -0.202020   },
-    //     {0,         0,          -1.000000,  0           },
-    // }};
-    
-    //test
+    // position on coordinate 3 on Z axis
     model_matrix = {{
         {1,         0,          0,          0           },
         {0,         1,          0,          0           },
         {0,         0,          1,          -3.0        },  
         {0,         0,          0,          1           },
     }};
+    //for test
+    // model_matrix = {{
+    //     {0.804738, -0.310617, 0.505879, 0.000000},
+    //     {0.505879, 0.804738 -0.310617, 0.000000},
+    //     {-0.310617, 0.505879, 0.804738, -3.000000},
+    //     {0.000000, 0.000000, 0.000000, 1.000000},
+    // }};
     // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
     proj_matrix = {{
         {1.810660,  0,          0,          0           },
