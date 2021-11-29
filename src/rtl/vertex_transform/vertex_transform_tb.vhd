@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Nov 17 19:06:31 2021
--- Last update : Tue Nov 23 23:31:22 2021
+-- Last update : Wed Nov 24 20:14:39 2021
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -93,6 +93,9 @@ begin
 	        else
 	            if (write_o = '1') then
 	                WriteUint32(f_out, data_o);
+	                if (data_o = GPU_PIPE_CMD_FRAME_END) then
+	                	flush(f_out);
+	                end if;
 	            end if;
 	            if (read_o = '1') then
 	            	ReadUint32(f_in, v_data_i);

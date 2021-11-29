@@ -80,17 +80,26 @@ int main(int argc, char **argv)
     
     // Create matrixes
     #if PERSPECTIVE_CORRECT
-    // position on coordinate 3 on Z axis
-    //model_matrix = {{
-        //{1,         0,          0,          0           },
-        //{0,         1,          0,          0           },
-        //{0,         0,          1,          -3.0        },  
-        //{0,         0,          0,          1           },
-    //}};
+    // // position on coordinate 3 on Z axis
+    // model_matrix = {{
+    //     {1,         0,          0,          0           },
+    //     {0,         1,          0,          0           },
+    //     {0,         0,          1,          -3.0        },  
+    //     {0,         0,          0,          1           },
+    // }};
+    // // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
+    // proj_matrix = {{
+    //     {1.810660,  0,          0,          0           },
+    //     {0,         2.414214,   0,          0           },
+    //     {0,         0,          -1.020202,  -0.202020   },
+    //     {0,         0,          -1.000000,  0           },
+    // }};
+    
+    //test
     model_matrix = {{
-        {0.804738,  -0.310617,  0.505879,   0           },
-        {0.505879,  0.804738,   -0.310617,  0           },
-        {-0.310617, 0.505879,   0.804738,   -3.0        },  
+        {1,         0,          0,          0           },
+        {0,         1,          0,          0           },
+        {0,         0,          1,          -3.0        },  
         {0,         0,          0,          1           },
     }};
     // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
@@ -130,6 +139,10 @@ int main(int argc, char **argv)
             iofifo.Flush();
             // ! rotate 2 degrees on each frame for test !
             //glRotate(2, 1, 1, 1);
+            if (cmd == GPU_PIPE_CMD_FRAME_END) {
+                printf("End of frame\n");
+                while(1) {}
+            }
             continue;
         }
         
@@ -161,6 +174,12 @@ int main(int argc, char **argv)
         WriteVertexToFifo(iofifo, v0, &colors[0]);
         WriteVertexToFifo(iofifo, v1, &colors[4]);
         WriteVertexToFifo(iofifo, v2, &colors[8]);
+        for (int j = 0; j < 4; ++j) printf("%f ", v0[j]);
+        printf("\n");
+        for (int j = 0; j < 4; ++j) printf("%f ", v1[j]);
+        printf("\n");
+        for (int j = 0; j < 4; ++j) printf("%f ", v2[j]);
+        printf("\n\n");
     }
  
     return 0; 

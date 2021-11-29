@@ -50,7 +50,7 @@ int drawGLScene( GLvoid )
     /* Clear The Screen And The Depth Buffer */
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
-    //~ glRotatef(1.f, 1.0f, 1.0f, 1.0f);
+    //glRotatef(1.f, 1.0f, 1.0f, 1.0f);
     
     glVertexPointer(3, GL_FLOAT, 0, vertices);
     glColorPointer(4, GL_FLOAT, 0, colors);
