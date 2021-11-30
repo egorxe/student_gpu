@@ -88,12 +88,12 @@ int main(int argc, char **argv)
         {0,         0,          0,          1           },
     }};
     //for test
-    // model_matrix = {{
-    //     {0.804738, -0.310617, 0.505879, 0.000000},
-    //     {0.505879, 0.804738 -0.310617, 0.000000},
-    //     {-0.310617, 0.505879, 0.804738, -3.000000},
-    //     {0.000000, 0.000000, 0.000000, 1.000000},
-    // }};
+     //model_matrix = {{
+         //{0.804738, -0.310617, 0.505879, 0.000000},
+         //{0.505879, 0.804738 -0.310617, 0.000000},
+         //{-0.310617, 0.505879, 0.804738, -3.000000},
+         //{0.000000, 0.000000, 0.000000, 1.000000},
+     //}};
     // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
     proj_matrix = {{
         {1.810660,  0,          0,          0           },
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     #endif
     
     // !static rotate on 45 degrees for test!
-    //glRotate(45, 1, 1, 1);
+    glRotate(45, 1, 1, 1);
     gl_print_matrix(model_matrix);
     
     while (1)
@@ -131,10 +131,10 @@ int main(int argc, char **argv)
             iofifo.Flush();
             // ! rotate 2 degrees on each frame for test !
             //glRotate(2, 1, 1, 1);
-            if (cmd == GPU_PIPE_CMD_FRAME_END) {
-                printf("End of frame\n");
-                while(1) {}
-            }
+            //if (cmd == GPU_PIPE_CMD_FRAME_END) {
+                //printf("End of frame\n");
+                //while(1) {}
+            //}
             continue;
         }
         
@@ -166,12 +166,14 @@ int main(int argc, char **argv)
         WriteVertexToFifo(iofifo, v0, &colors[0]);
         WriteVertexToFifo(iofifo, v1, &colors[4]);
         WriteVertexToFifo(iofifo, v2, &colors[8]);
+        #if 0
         for (int j = 0; j < 4; ++j) printf("%f ", v0[j]);
         printf("\n");
         for (int j = 0; j < 4; ++j) printf("%f ", v1[j]);
         printf("\n");
         for (int j = 0; j < 4; ++j) printf("%f ", v2[j]);
         printf("\n\n");
+        #endif
     }
  
     return 0; 
