@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     #endif
     
     // !static rotate on 45 degrees for test!
-    //glRotate(45, 1, 1, 1);
+    glRotate(45, 1, 1, 1);
     gl_print_matrix(model_matrix);
     
     while (1)
