@@ -88,12 +88,12 @@ int main(int argc, char **argv)
         {0,         0,          0,          1           },
     }};
     //for test
-     //model_matrix = {{
-         //{0.804738, -0.310617, 0.505879, 0.000000},
-         //{0.505879, 0.804738 -0.310617, 0.000000},
-         //{-0.310617, 0.505879, 0.804738, -3.000000},
-         //{0.000000, 0.000000, 0.000000, 1.000000},
-     //}};
+    // model_matrix = {{
+    //     {0.804738, -0.310617, 0.505879, 0.000000},
+    //     {0.505879, 0.804738 -0.310617, 0.000000},
+    //     {-0.310617, 0.505879, 0.804738, -3.000000},
+    //     {0.000000, 0.000000, 0.000000, 1.000000},
+    // }};
     // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
     proj_matrix = {{
         {1.810660,  0,          0,          0           },
@@ -130,11 +130,7 @@ int main(int argc, char **argv)
             iofifo.WriteToFifo32(cmd);
             iofifo.Flush();
             // ! rotate 2 degrees on each frame for test !
-            //glRotate(2, 1, 1, 1);
-            //if (cmd == GPU_PIPE_CMD_FRAME_END) {
-                //printf("End of frame\n");
-                //while(1) {}
-            //}
+            glRotate(2, 1, 1, 1);
             continue;
         }
         
