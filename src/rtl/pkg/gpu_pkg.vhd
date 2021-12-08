@@ -45,6 +45,7 @@ package gpu_pkg is
     constant GPU_PIPE_CMD_POLY_VERTEX : vec32 := X"FFFFFF00";
     constant GPU_PIPE_CMD_FRAME_END   : vec32 := X"FFFFFF01";
     constant GPU_PIPE_CMD_FRAGMENT    : vec32 := X"FFFFFF02";
+    constant PIPELINE_MAX_Z           : vec32 := X"00010000";
 
 
 
