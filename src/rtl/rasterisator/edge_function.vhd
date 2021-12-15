@@ -47,7 +47,7 @@ entity edge_function is
         constant max_heigh : float32 := to_float(480.0)
     );
     Port (  clk : in std_logic;
-            rst : in std_logic
+            rst : in std_logic;
         );
            
 end edge_function;
@@ -61,9 +61,8 @@ type bound is array (0 to 4) of float32;
 
 type file_real is file of float32;
 
-
 begin   
-
+  
     unsinc: process
     variable w0 : float32;  
     variable w1 : float32;
@@ -209,49 +208,6 @@ begin
         end if;
         
             
-        
-        
-        
-        
-        
-        
-    
---        x_b(0) := v0(0);
---        x_b(1) := v1(0);
---        x_b(2) := v2(0);
---        x_b(3) := to_float(0.0);
---        x_b(4) := max_width; 
-        
---        y_b(0) := v0(1);
---        y_b(1) := v1(1);
---        y_b(2) := v2(1);
---        y_b(3) := to_float(0.0);
---        y_b(4) := max_heigh; 
-        
---        x_min := to_integer(x_b(0));
---        x_max := to_integer(x_b(0));
---        y_min := to_integer(y_b(0));
---        y_max := to_integer(y_b(0));
-            
---        for i in 0 to 4 loop
---            if x_b(i) > x_max then
---                x_max := to_integer(x_b(i));
---            end if;
-            
---            if x_b(i) < x_min then
---                x_min := to_integer(x_b(i));
---            end if;
-            
---            if y_b(i) > y_max then
---                y_max := to_integer(y_b(i));
---            end if;
-            
---            if y_b(i) < y_min then
---                y_min := to_integer(y_b(i));
---            end if;
---        end loop;
-
-        
         if (x_max >= 0) and (y_max >= 0) and (x_min <= max_width) and (y_min <= max_heigh) then
         
         

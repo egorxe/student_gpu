@@ -30,7 +30,7 @@ entity fragment_ops is
 end fragment_ops;
 
 architecture core of fragment_ops is
-  signal cmd        : vec32 := ZERO32;
+  
   signal x          : vec32 := ZERO32;
   signal y          : vec32 := ZERO32;
   signal z          : vec32 := ZERO32;
@@ -39,8 +39,9 @@ architecture core of fragment_ops is
   signal depth_buffer : buff;
 begin
   process (clk_i, rst_i)
-  variable c          : vec32; -- printf debug
-  type state_type is (IDLE, XREAD, YREAD, ZREAD, COLORREAD, XYOUT, CHECK, COLOROUT);
+  variable cmd        : vec32 := ZERO32;
+  -- variable c          : vec32; -- printf debug
+  type state_type is (IDLE, SENT_ZERO, Z_TO_ZERO, XREAD, YREAD, ZREAD, COLORREAD, XYOUT, CHECK, COLOROUT);
   variable state      : state_type := IDLE;
   variable i          : integer;
   variable j          : integer;
@@ -52,51 +53,85 @@ begin
       case state is
         when IDLE =>
           if stb_i = '1' then
-            cmd <= data_i;
+            -- report "IDLE";
+            cmd := data_i;
+            -- report "data_i " & to_hstring(data_i);
             i := 0;
             j := 0;
+            -- report "cmd " & to_hstring(cmd);
             if not(cmd = GPU_PIPE_CMD_FRAGMENT) then
-              if i < SCREEN_WIDTH then
-                if i < SCREEN_HEIGHT then
-                  depth_buffer(i * SCREEN_HEIGHT + j) <= PIPELINE_MAX_Z;
-                  j := j+1;
-                else
-                  j := 0;
-                  i := i+1;
-                end if;
-              end if;
+              data_o <= cmd;
+              stb_o <= '1';
+              rdr_o <= '0';
+              state := SENT_ZERO;
+              -- report "FRAME";
             else
               state := XREAD;
             end if;
             -- stb_o 
             ack_o <= '1';  
           end if;
+
+        when SENT_ZERO =>
+        -- report "SENT_ZERO";
+          data_o <= ZERO32;
+          stb_o <= '1';
+          rdr_o <= '0';
+          state := Z_TO_ZERO;
+
+        when Z_TO_ZERO =>
+          rdr_o <= '0';
+          if i < SCREEN_WIDTH then
+            if j < SCREEN_HEIGHT then
+              depth_buffer(i * SCREEN_HEIGHT + j) <= PIPELINE_MAX_Z;
+              j := j+1;
+            else
+              j := 0;
+              i := i+1;
+            end if;
+          else
+            rdr_o <= '1';
+            state := IDLE;
+            -- report "Z_TO_ZERO_end";
+          end if;
+        
         when XREAD =>
+        -- report "XREAD";
           if stb_i = '1' then
             x <= data_i;
             state := YREAD;
             ack_o <= '1';
           end if;
         when YREAD =>
+        -- report "YREAD";
           if stb_i = '1' then
             y <= data_i;
             state := ZREAD;
             ack_o <= '1';
           end if;
         when ZREAD =>
+        -- report "ZREAD";
           if stb_i = '1' then
             z <= data_i;
             state := COLORREAD;
             ack_o <= '1';
+            rdr_o <= '0';
           end if;
         when COLORREAD =>
+        -- report "COLORREAD";
+        -- report "stb_i " & std_logic'image(stb_i);
           if stb_i = '1' then
             color <= data_i;
             state := CHECK;
             rdr_o <= '0';
             ack_o <= '1';
           end if;
+
         when CHECK =>
+        -- report "CHECK";
+        -- report to_hstring(x);
+        -- report to_hstring(y);
+        -- report to_hstring(z);
           if z >= depth_buffer(to_uint(x) * SCREEN_HEIGHT + to_uint(y)) then
             state := IDLE;
             rdr_o <= '1';
@@ -107,38 +142,18 @@ begin
           end if;
           
         when XYOUT =>
+        -- report "XYOUT";
           data_o <= x or (y sll 16);
           stb_o <= '1';
           rdr_o <= '0';
           state := COLOROUT;
         when COLOROUT =>
+        -- report "COLOROUT";
           data_o <= color;
           stb_o <= '1';
           -- rdr_o <= '0';
           state := IDLE;
       end case;
------------------------------------
-      -- cmd <= data_i; -- ReadUint32(f_in, cmd);
-      -- while true loop
-      --   if not(cmd = X"FFFFFF02") then
-      --     for i in 0 to SCREEN_WIDTH-1 loop
-      --       for j in 0 to SCREEN_HEIGHT-1 loop
-      --         depth_buffer(i * SCREEN_HEIGHT + j) <= PIPELINE_MAX_Z;
-      --       end loop; -- for j in 0 to SCREEN_HEIGHT-1        
-      --     end loop; -- for i in 0 to SCREEN_WIDTH-1
-      --     next;
-      --   end if;
-      --   x <= data_i;-- ReadUint32(f_in, x);
-      --   y <= data_i;-- ReadUint32(f_in, y);
-      --   z <= data_i;-- ReadUint32(f_in, z);
-      --   color <= data_i;-- ReadUint32(f_in, color);
-      --   if z >= depth_buffer(to_uint(x) * SCREEN_HEIGHT + to_uint(y)) then
-      --     next;
-      --   end if;
-      --   depth_buffer(to_sint(x) * SCREEN_HEIGHT + to_sint(y)) <= z;
-      --   data_o <= x or (y sll 16);
-      --   data_o <= color;
-      -- end loop;
     end if;
 
   end process;

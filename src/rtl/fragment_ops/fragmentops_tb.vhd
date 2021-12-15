@@ -3,6 +3,8 @@
 library ieee;
     use ieee.std_logic_1164.all;
     use ieee.float_pkg.all;
+    use std.textio.all;
+    use ieee.std_logic_textio.all;
     
 use work.gpu_pkg.all;
 use work.file_helper_pkg.all;
@@ -92,6 +94,10 @@ begin
         else
             if (stb_out = '1') then
                 WriteUint32(f_out, data_out);
+                if (data_out = GPU_PIPE_CMD_FRAME_END) then
+                    flush(f_out);
+                end if;
+                -- report "write " & to_hstring(data_out);
             end if;
         end if;
     end if;
@@ -110,8 +116,10 @@ begin
                 file_open(fstatus, f_in, IN_FIFO_NAME, READ_MODE);
             end if;
         else
+            -- report "rdr_o " & std_logic'image(rdr_out);
             if (rdr_out = '1') then
                 ReadUint32(f_in, datainbuff);
+                -- report "read " & to_hstring(datainbuff);
                 data_in <= datainbuff;
                 stb_in <= '1';
             else
