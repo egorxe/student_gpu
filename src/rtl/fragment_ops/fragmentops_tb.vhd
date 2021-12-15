@@ -97,7 +97,7 @@ begin
                 if (data_out = GPU_PIPE_CMD_FRAME_END) then
                     flush(f_out);
                 end if;
-                report "write " & to_hstring(data_out);
+                -- report "write " & to_hstring(data_out);
             end if;
         end if;
     end if;
@@ -119,7 +119,7 @@ begin
             -- report "rdr_o " & std_logic'image(rdr_out);
             if (rdr_out = '1') then
                 ReadUint32(f_in, datainbuff);
-                report "read " & to_hstring(datainbuff);
+                -- report "read " & to_hstring(datainbuff);
                 data_in <= datainbuff;
                 stb_in <= '1';
             else
