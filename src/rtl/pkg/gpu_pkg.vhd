@@ -26,6 +26,13 @@ package gpu_pkg is
     constant NCOORDS   : integer                       := 3;
     constant NCOLORS   : integer                       := 4;
     constant NVERTICES : integer                       := 3;
+    
+    -- AXI-stream constants
+    constant GLOBAL_AXIS_DATA_WIDTH : integer           := 32;
+    constant GLOBAL_AXIS_KEEP_WIDTH : integer           := 4;
+    constant GLOBAL_AXIS_ID_WIDTH   : integer           := 4;
+    constant GLOBAL_AXIS_DEST_WIDTH : integer           := 4;
+    constant GLOBAL_AXIS_USER_WIDTH : integer           := 4;
 
     ------------------------------------------------------------------------
     ------------------------------ TYPES -----------------------------------
@@ -64,6 +71,34 @@ package gpu_pkg is
         w2  : float32;
         mask : integer;
     end record;
+    
+    -- AXI-stream
+    type global_axis_mosi_type is record
+        axis_tdata            : std_logic_vector(GLOBAL_AXIS_DATA_WIDTH - 1 downto 0);
+        axis_tkeep            : std_logic_vector(GLOBAL_AXIS_KEEP_WIDTH - 1 downto 0);
+        axis_tvalid           : std_logic;
+        axis_tlast            : std_logic;
+        axis_tid              : std_logic_vector(GLOBAL_AXIS_ID_WIDTH - 1 downto 0);
+        axis_tdest            : std_logic_vector(GLOBAL_AXIS_DEST_WIDTH - 1 downto 0);
+        axis_tuser            : std_logic_vector(GLOBAL_AXIS_USER_WIDTH - 1 downto 0);
+    end record;
+    
+    constant AXIS_MOSI_DEFAULT : global_axis_mosi_type := 
+    (
+        axis_tdata            => (others => '0'),
+        axis_tkeep            => (others => '0'),
+        axis_tvalid           => '0',
+        axis_tlast            => '0',
+        axis_tid              => (others => '0'),
+        axis_tdest            => (others => '0'),
+        axis_tuser            => (others => '0')  
+    );
+    
+    type global_axis_miso_type is record
+        axis_tready           : std_logic;
+    end record;
+    
+    constant AXIS_MISO_DEFAULT : global_axis_miso_type := (axis_tready => '0');
 
     ------------------------------------------------------------------------
     ---------------------------- CONSTANTS2 --------------------------------
