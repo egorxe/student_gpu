@@ -40,7 +40,7 @@ architecture core of fragment_ops is
 begin
   process (clk_i, rst_i)
   variable cmd        : vec32 := ZERO32;
-  variable c          : vec32; -- printf debug
+  -- variable c          : vec32; -- printf debug
   type state_type is (IDLE, SENT_ZERO, Z_TO_ZERO, XREAD, YREAD, ZREAD, COLORREAD, XYOUT, CHECK, COLOROUT);
   variable state      : state_type := IDLE;
   variable i          : integer;
