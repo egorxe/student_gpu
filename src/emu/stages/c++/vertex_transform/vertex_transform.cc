@@ -8,7 +8,7 @@
 #include <gpu_pipeline.hh> 
 #include <pipeline_cmd.h> 
 
-#define PERSPECTIVE_CORRECT     0
+#define PERSPECTIVE_CORRECT     1
 
 M4 model_matrix;
 M4 proj_matrix;
@@ -56,6 +56,14 @@ void WriteVertexToFifo(IoFifo &iofifo, Vec4 &v, float *colors)
         iofifo.WriteToFifoFloat(colors[i]);
 }
 
+void gl_print_matrix(M4 m) {
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		printf("%f %f %f %f\n", m.m[i][0], m.m[i][1], m.m[i][2], m.m[i][3]);
+	}
+}
+
 int main(int argc, char **argv) 
 {
     if (argc != 5)
@@ -79,6 +87,13 @@ int main(int argc, char **argv)
         {0,         0,          1,          -3.0        },  
         {0,         0,          0,          1           },
     }};
+    //for test
+    // model_matrix = {{
+    //     {0.804738, -0.310617, 0.505879, 0.000000},
+    //     {0.505879, 0.804738 -0.310617, 0.000000},
+    //     {-0.310617, 0.505879, 0.804738, -3.000000},
+    //     {0.000000, 0.000000, 0.000000, 1.000000},
+    // }};
     // perspective projection from gluPerspective(45, 4./3., 0.1, 10);
     proj_matrix = {{
         {1.810660,  0,          0,          0           },
@@ -103,7 +118,8 @@ int main(int argc, char **argv)
     #endif
     
     // !static rotate on 45 degrees for test!
-    //glRotate(45, 1, 1, 1);
+    glRotate(45, 1, 1, 1);
+    gl_print_matrix(model_matrix);
     
     while (1)
     {
@@ -146,6 +162,14 @@ int main(int argc, char **argv)
         WriteVertexToFifo(iofifo, v0, &colors[0]);
         WriteVertexToFifo(iofifo, v1, &colors[4]);
         WriteVertexToFifo(iofifo, v2, &colors[8]);
+        #if 0
+        for (int j = 0; j < 4; ++j) printf("%f ", v0[j]);
+        printf("\n");
+        for (int j = 0; j < 4; ++j) printf("%f ", v1[j]);
+        printf("\n");
+        for (int j = 0; j < 4; ++j) printf("%f ", v2[j]);
+        printf("\n\n");
+        #endif
     }
  
     return 0; 

@@ -7,7 +7,7 @@
 
 #include <gpu_pipeline.hh> 
 
-#define PERSPECTIVE_CORRECT     0
+#define PERSPECTIVE_CORRECT     1
 
 float edgeFunction(const Vec4 &a, const Vec4 &b, const Vec4 &c) 
 { 

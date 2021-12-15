@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Nov 17 19:06:31 2021
--- Last update : Tue Nov 23 23:25:41 2021
+-- Last update : Wed Nov 24 19:04:38 2021
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ architecture testbench of vertex_transform_trivial_tb is
 	signal write_o : std_logic;
 	signal s_i : integer := 0;
 
-	constant DATA_AMOUNT : integer := 46;
+	constant DATA_AMOUNT : integer := 49;
 	type memory_type is array (0 to DATA_AMOUNT - 1) of vec32;
 	constant ONE32 : std_logic_vector(31 downto 0) := ("0" & "01111111" & "00000000000000000000000");
 	constant TWO32 : std_logic_vector(31 downto 0) := ("0" & "10000000" & "00000000000000000000000");
@@ -100,6 +100,9 @@ architecture testbench of vertex_transform_trivial_tb is
 		TWO32,
 
 		GPU_PIPE_CMD_FRAME_END,
+		GPU_PIPE_CMD_FRAME_END,
+		GPU_PIPE_CMD_FRAME_END,
+		GPU_PIPE_CMD_FRAME_END,
 		GPU_PIPE_CMD_FRAGMENT,
 
 		GPU_PIPE_CMD_POLY_VERTEX,
@@ -127,6 +130,7 @@ architecture testbench of vertex_transform_trivial_tb is
 		TWO32,
 		TWO32,
 		TWO32
+
 		);
 
 	-- Other constants

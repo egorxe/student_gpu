@@ -3,10 +3,10 @@
 set -e
 
 # Write your sources here (order is resolved automaticaly)
-TOP="fragment_ops"
+TOP="fragment_ops_tb"
 SOURCES_BASEPATH=".."
 #SOURCES="test_vertices.vhd test_vertices_fifotb.vhd"
-SOURCES="fragmentops.vhd"
+SOURCES="fragmentops.vhd fragmentops_tb.vhd"
 PACKAGES="gpu_pkg.vhd file_helper_pkg.vhd"
 
 # Some generic defines

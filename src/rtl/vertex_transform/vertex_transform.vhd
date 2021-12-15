@@ -2,6 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.float_pkg.all;
+--use std.textio.all;
+--use ieee.std_logic_textio.all;
 
 library work;
 --use work.fpupack.all;
@@ -69,59 +71,34 @@ architecture rtl of vertex_transform is
 		);
 	end component fpu;
 
-	function rToSlv(value : real
-		) return std_logic_vector is
-	begin
-		return to_slv(tf(value));
-	end function;
-
-	function intToSVec(intValue : integer;
-			vecLength : integer
-		) return std_logic_vector is
-	begin
-		return std_logic_vector(to_signed(intValue, vecLength));
-	end function;
-
-	function max(vecLength : integer
-		) return std_logic_vector is
-	begin
-		return intToSVec(-1, vecLength);
-	end function;
-
-	function zero(vecLength : integer
-		) return std_logic_vector is
-	begin
-		return intToSVec(0, vecLength);
-	end function;
-
 	constant model_matrix : M44 := (
-			(to_slv(tf(0.804738)), to_slv(tf(-0.310617)), to_slv(tf(0.505879)), to_slv(tf(0.0))),
-			(to_slv(tf(0.505879)), to_slv(tf(0.804738)), to_slv(tf(-0.310617)), to_slv(tf(0.0))),
-			(to_slv(tf(-0.310617)), to_slv(tf(0.505879)), to_slv(tf(0.804738)), to_slv(tf(-3.0))),
-			(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)))
+			(to_slv(0.804738), to_slv(-0.310617), to_slv(0.505879), to_slv(0.0)),
+			(to_slv(0.505879), to_slv(0.804738), to_slv(-0.310617), to_slv(0.0)),
+			(to_slv(-0.310617), to_slv(0.505879), to_slv(0.804738), to_slv(-3.0)),
+			(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
 		);
 
 	constant proj_matrix : M44 := (
-			(to_slv(tf(1.810660)), 	to_slv(tf(0.0)), 		to_slv(tf(0.0)), 		to_slv(tf(0.0))),
-			(to_slv(tf(0.0)), 		to_slv(tf(2.414214)), 	to_slv(tf(0.0)), 		to_slv(tf(0.0))),
-			(to_slv(tf(0.0)), 		to_slv(tf(0.0)), 		to_slv(tf(-1.020202)), 	to_slv(tf(-0.202020))),
-			(to_slv(tf(0.0)), 		to_slv(tf(0.0)), 		to_slv(tf(-1.000000)), 	to_slv(tf(1.0)))
+			(to_slv(1.810660), 	to_slv(0.0), 		to_slv(0.0), 		to_slv(0.0)),
+			(to_slv(0.0), 		to_slv(2.414214), 	to_slv(0.0), 		to_slv(0.0)),
+			(to_slv(0.0), 		to_slv(0.0), 		to_slv(-1.020202), 	to_slv(-0.202020)),
+			(to_slv(0.0), 		to_slv(0.0), 		to_slv(-1.000000), 	to_slv(0.0))
 		);
 
 	--for test
 	--constant model_matrix : M44 := (
-	--	(to_slv(tf(1.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0))),
-	--	(to_slv(tf(0.0)), to_slv(tf(1.0)), to_slv(tf(0.0)), to_slv(tf(0.0))),
-	--	(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)), to_slv(tf(0.0))),
-	--	(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)))
+	--	(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(-3.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
 	--	);
 
 	--for test
 	--constant proj_matrix : M44 := (
-	--	(to_slv(tf(1.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0))),
-	--	(to_slv(tf(0.0)), to_slv(tf(1.0)), to_slv(tf(0.0)), to_slv(tf(0.0))),
-	--	(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)), to_slv(tf(0.0))),
-	--	(to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(0.0)), to_slv(tf(1.0)))
+	--	(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
 	--	);
 
 	type V3 is array (0 to 2) of vec32;
@@ -142,7 +119,7 @@ architecture rtl of vertex_transform is
 		fpu_operation                                                                      : fpu_operation_vec;
 	end record;
 
-	constant zero_reg : reg_type := (module_state => reading,
+	constant zero_vec_reg : reg_type := (module_state => reading,
 			mul_res_ready       => '0',
 			mul_load_ready      => '0',
 			fpu_res_ready       => (others => '0'),
@@ -163,7 +140,7 @@ architecture rtl of vertex_transform is
 			fpu_operation       => (others => (others => '0'))
 		);
 
-	signal reg_in, reg : reg_type := zero_reg;
+	signal reg_in, reg : reg_type := zero_vec_reg;
 
 	signal s_mul_result     : V4;
 	signal mul_set          : std_logic;
@@ -190,7 +167,7 @@ begin
 	begin
 		if (rising_edge(clk_i)) then
 			if (rst_i = '1') then
-				reg <= zero_reg;
+				reg <= zero_vec_reg;
 			else
 				reg <= reg_in;
 			end if;
@@ -237,25 +214,34 @@ begin
 		data_o  <= (others => '0');
 
 		if (rst_i = '1') then
-			var := zero_reg;
+			var := zero_vec_reg;
 		else
 			case (reg.module_state) is
 
 				when reading =>
 					case (reg.input_counter) is
+						--request
 						when 0 =>
 							read_o            <= '1';
 							var.input_counter := 1;
 
+						--processing
 						when 1 =>
 							var.input_counter := 0;
+							--if polygon vertices reading hasn't been started yet
 							if (reg.reading_vertex_data = '0') then
 								data_o  <= data_i;
 								write_o <= '1';
+								--let's read polygon data
 								if (data_i = GPU_PIPE_CMD_POLY_VERTEX) then
 									var.reading_vertex_data := '1';
+									--report "End of polygon \n";
 								end if;
+								--if (data_i = GPU_PIPE_CMD_FRAME_END) then
+								--	report "End of frame \n";
+								--end if;
 
+							--reading of polygon data
 							else
 								if (reg.vertex_data_counter < NCOORDS + NCOLORS - 1) then
 									if (reg.vertex_data_counter < NCOORDS) then
@@ -289,7 +275,7 @@ begin
 							if (reg.processing = '0') then
 								var.processing := '1';
 								assign_V3_to_V4(var.w_coords, reg.coords);
-								var.w_coords(3) := rToSlv(1.0);
+								var.w_coords(3) := to_slv(1.0);
 								var.matrix      := model_matrix;
 								mul_start       <= '1';
 								mul_set         <= '1';
@@ -319,8 +305,8 @@ begin
 								assign_V4_to_V3(var.fpu_opa, reg.w_coords);
 								var.fpu_opb       := (others => reg.w_coords(3));
 								var.fpu_operation := (others => "011");
-								fpu_start         <= max(fpu_start'length);
-							elsif (fpu_res_ready = max(fpu_res_ready'length) and reg.fpu_res_ready = zero(reg.fpu_res_ready'length)) then
+								fpu_start         <= max_vec(fpu_start'length);
+							elsif (fpu_res_ready = max_vec(fpu_res_ready'length) and reg.fpu_res_ready = zero_vec(reg.fpu_res_ready'length)) then
 								var.processing := '0';
 								assign_V3_to_V4(var.w_coords, fpu_result);
 								var.proc_counter := 3;
@@ -329,40 +315,43 @@ begin
 						--veiwport transform
 						when 3 =>
 							case (reg.veiwport_counter) is
-								when 0 => -- +1
+								-- +1
+								when 0 =>
 									if (reg.processing = '0') then
 										var.processing := '1';
 										assign_V4_to_V3(var.fpu_opa, reg.w_coords);
 										var.fpu_opb       := (others => to_slv(tf(1.0)));
 										var.fpu_operation := (others => "000");
-										fpu_start         <= max(fpu_start'length);
-									elsif (fpu_res_ready = max(fpu_res_ready'length) and reg.fpu_res_ready = zero(reg.fpu_res_ready'length)) then
+										fpu_start         <= max_vec(fpu_start'length);
+									elsif (fpu_res_ready = max_vec(fpu_res_ready'length) and reg.fpu_res_ready = zero_vec(reg.fpu_res_ready'length)) then
 										var.processing := '0';
 										assign_V3_to_V4(var.w_coords, fpu_result);
 										var.veiwport_counter := 1;
 									end if;
-								when 1 => -- /2
+								-- /2
+								when 1 => 
 									if (reg.processing = '0') then
 										var.processing := '1';
 										assign_V4_to_V3(var.fpu_opa, reg.w_coords);
-										var.fpu_opb       := (others => to_slv(tf(2.0)));
+										var.fpu_opb       := (others => to_slv(2.0));
 										var.fpu_operation := (others => "011");
-										fpu_start         <= max(fpu_start'length);
-									elsif (fpu_res_ready = max(fpu_res_ready'length) and reg.fpu_res_ready = zero(reg.fpu_res_ready'length)) then
+										fpu_start         <= max_vec(fpu_start'length);
+									elsif (fpu_res_ready = max_vec(fpu_res_ready'length) and reg.fpu_res_ready = zero_vec(reg.fpu_res_ready'length)) then
 										var.processing := '0';
 										assign_V3_to_V4(var.w_coords, fpu_result);
 										var.veiwport_counter := 2;
 									end if;
-								when 2 => -- *(size_i - 1)
+								-- *(screen_size - 1)
+								when 2 => 
 									if (reg.processing = '0') then
 										var.processing    := '1';
 										var.fpu_opa(0)    := reg.w_coords(0);
 										var.fpu_opa(1)    := reg.w_coords(1);
-										var.fpu_opb(0)    := to_slv(tf(Real(SCREEN_WIDTH - 1)));
-										var.fpu_opb(1)    := to_slv(tf(Real(SCREEN_HEIGHT - 1)));
+										var.fpu_opb(0)    := to_slv(Real(SCREEN_WIDTH - 1));
+										var.fpu_opb(1)    := to_slv(Real(SCREEN_HEIGHT - 1));
 										var.fpu_operation := (others => "010");
 										fpu_start         <= "110";
-									elsif (fpu_res_ready = "110" and reg.fpu_res_ready = zero(reg.fpu_res_ready'length)) then
+									elsif (fpu_res_ready = "110" and reg.fpu_res_ready = zero_vec(reg.fpu_res_ready'length)) then
 										var.processing       := '0';
 										var.w_coords(0)      := fpu_result(0);
 										var.w_coords(1)      := fpu_result(1);
@@ -379,15 +368,20 @@ begin
 					end case;
 
 				when writing =>
-
+					--writing data to fifo at each rising edge
 					if (reg.vertex_data_counter < NCOORDS + 1) then
 						data_o <= reg.w_coords(reg.vertex_data_counter);
+						--report (real'image(to_real(reg.w_coords(reg.vertex_data_counter))) & " ");
+						--if (reg.vertex_data_counter = NCOORDS) then
+						--	report "\n";
+						--end if;
 					elsif (reg.vertex_data_counter < NCOORDS + 1 + NCOLORS) then
 						data_o <= reg.colors(reg.vertex_data_counter - NCOORDS - 1);
 					end if;
 					write_o                 <= '1';
 					var.vertex_data_counter := reg.vertex_data_counter + 1;
 
+					--it's time to process next protion of data
 					if (reg.vertex_data_counter = NCOORDS + NCOLORS) then
 						var.module_state        := reading;
 						var.vertex_data_counter := 0;
