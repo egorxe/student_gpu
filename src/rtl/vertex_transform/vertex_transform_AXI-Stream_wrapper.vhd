@@ -57,7 +57,14 @@ architecture vertex_transform_AXIS_wrapper_arc of vertex_transform_AXIS_wrapper 
 									s_axis_ready => ('1'),
 									vt_ready => '1', 
 
-									m_axis => AXIS_MOSI_DEFAULT,
+									m_axis => (	axis_tdata            => (others => '0'),
+        										axis_tkeep            => (others => '1'),
+        										axis_tvalid           => '0',
+											    axis_tlast            => '0',
+											    axis_tid              => (others => '0'),
+											    axis_tdest            => (others => '0'),
+											    axis_tuser            => (others => '0') 
+											    ),
 									vt_valid => '0'
 									);
 	signal rec, rec_in : rec_type := rst_rec;
