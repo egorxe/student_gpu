@@ -1,10 +1,7 @@
 library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.std_logic_unsigned.all;
-library std;
-use std.textio.all;
-use ieee.std_logic_textio.all;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+  use ieee.std_logic_unsigned.all;
 
 use work.gpu_pkg.all;
 use work.file_helper_pkg.all;
