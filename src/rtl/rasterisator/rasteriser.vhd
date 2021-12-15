@@ -19,7 +19,7 @@ use work.file_helper_pkg.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity edge_function is
+entity rasteriser is
 
     Generic (
         constant max_width : float32 := to_float(640.0);
@@ -30,17 +30,34 @@ entity edge_function is
             rst : in std_logic;
             vec_i : in RV;
             vec_o : out RV;
-            ready_i : in std_logic;
+            valid_i : in std_logic;
         );
            
-end edge_function;
+end rasteriser;
 
-architecture Behavioral of edge_function is
+architecture Behavioral of rasteriser is
 
 type vec4 is array (0 to 3) of float32;
 type bound is array (0 to 4) of float32;
 
+component edge_function is
+    Port (
+            clk        : in std_logic;
+            rst        : in std_logic;
 
+            data_valid : in  std_logic;
+            x          : in float32;
+            y          : in float32;
+            v0x        : in float32;
+            v0y        : in float32;
+            v1x        : in float32;
+            v1y        : in float32;
+
+            result : out std_logic;
+            ready : out std_logic;
+        );
+
+end component;
 
 type file_real is file of float32;
 
@@ -67,38 +84,10 @@ type reg_type is record
     
 end record;
 
+signal result_buf : w_array;
 
 
 
-component calculate_edge_function is
-
-    Generic (
-        
-    );
-    Port (  clk : in std_logic;
-            rst : in std_logic;
-            
-            x   : in float32;
-            y   : in float32;
-            a0x : in float32;
-            a0y : in float32;
-            a1x : in float32;
-            a1y : in float32;
-            a2x : in float32;
-            a2y : in float32;
-            
-            w0   : out float32;
-            w1   : out float32;
-            w2   : out float32;
-            
-            mask : in std_logic;
-            
-            ready : out std_logic;
-            valid : in  std_logic
-            
-        );
-           
-end component;
 
 signal ready_buf : std_logic;
 
@@ -112,30 +101,24 @@ begin
         map_pixel_1 : calculate_edge_function
             generic map ()
             port map (
-                clk <= clk,
-                rst <= rst,
-                x   <= r.ver_ef(i).x,
-                y   <= r.ver_ef(i).y,
-                a0x <= r.ver_ef(i).a1x,
-                a0y <= r.ver_ef(i).a1y,
-                a1x <= r.ver_ef(i).a1x,
-                a1y <= r.ver_ef(i).a1y,
-                a2x <= r.ver_ef(i).a2x,
-                a2y <= r.ver_ef(i).a2y,
-                
-                mask <= r.mask;
-                
-                w0   <= r.ver_ef(i).w0,
-                w1   <= r.ver_ef(i).w1,
-                w2   <= r.ver_ef(i).w2,
-                
-                ready <= ready_buf,
-                valid <= r.valid_buf
+            clk        => clk,
+            rst        => rst,
+
+            data_valid => r.valid_buf,
+            x          => r.ver_ef(i).x,
+            y          => r.ver_ef(i).y,
+            v0x        => r.ver_ef(i).a1x,
+            v0y        => r.ver_ef(i).a1y,
+            v1x        => r.ver_ef(i).a2x,
+            v1y        => r.ver_ef(i).a2y,
+
+            result     => result_buf(i),
+            ready      => ready_buf
                 
             );
     end generate;
 
-    buffer_of_vertixes : process(ready_i, r)
+    buffer_of_vertixes : process(valid_i, r)
     variable v : reg_type;
     begin
         v := r;
@@ -144,7 +127,7 @@ begin
         
             when idle =>
                 
-                if ready_i = '1' then
+                if valid_i = '1' then
                     v.vec_buf := vec_i;
                     v.state := framing;
                 end if;
@@ -220,17 +203,10 @@ begin
                             v.ver_ef(i).a2y := v.vec_buf(2).y;
                             v.x := v.x + 1;
                             
-                            if (v.x = to_uint(v.x_max)) and (v.y /= to_uint(v.y_max))  then
+                            if (v.x = to_uint(v.x_max))then
                                 v.x := v.x_min;
                                 v.y := v.y + 1;
                             end if;
-                            
-                            if (v.y = to_uint(v.y_max) - 1) and (v.x >= to_uint(v.x_max)) then
-                                v.ver_ef(i).mask := '1';
-                            else
-                                v.ver_ef(i).mask := '0';
-                            end if;
-                                
                             
                         end loop;    
                         v.valid_buf := '1';
@@ -240,13 +216,16 @@ begin
             when waiting_0 =>
                 if ready_buf = '1' then
                     for i in 0 to n - 1 loop
-                        v.w0(i) := v.ver_ef(i).w0;
-                        
+                        v.w0(i) := result_buf(i);
                     end loop;
+                    
+                    v.state := calculate_edge_function_1;
 
                 end if;
+                
+            when calculate_edge_function_1 => 
                         
-                    
+ end Behavioral;                   
                         
                 
                     
