@@ -36,6 +36,34 @@ package gpu_pkg is
     type M44 is array (0 to 3) of V4;
     type FV4 is array (0 to 3) of float32;
     type FM44 is array (0 to 3) of FV4;
+    
+    type rast_vertex is record
+        x : float32;
+        y : float32;
+        z : float32;
+        w : float32;
+        r : float32;
+        g : float32;
+        b : float32;
+        a : float32;
+    end record;
+    
+    type RV is array (0 to 2) of rast_vertex;
+    
+    type ef is record
+        x   : float32;
+        y   : float32;
+        a0x : float32;
+        a0y : float32;
+        a1x : float32;
+        a1y : float32;
+        a2x : float32;
+        a2y : float32;
+        w0  : float32;
+        w1  : float32;
+        w2  : float32;
+        mask : integer;
+    end record;
 
     ------------------------------------------------------------------------
     ---------------------------- CONSTANTS2 --------------------------------
