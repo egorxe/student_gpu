@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Nov 17 19:06:31 2021
--- Last update : Wed Nov 24 19:04:38 2021
+-- Last update : Wed Dec 15 19:34:29 2021
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -18,6 +18,10 @@
 -- the revision control system (RCS).  The RCS should be consulted
 -- on revision history.
 -------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+--------------------TODO: NEED TO MAKE IT RELEVANT
+--------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;

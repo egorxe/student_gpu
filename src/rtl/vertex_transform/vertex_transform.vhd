@@ -6,7 +6,7 @@ use ieee.float_pkg.all;
 --use ieee.std_logic_textio.all;
 
 library work;
---use work.fpupack.all;
+use work.fpupack.all;
 use work.gpu_pkg.all;
 
 entity vertex_transform is
@@ -19,10 +19,13 @@ entity vertex_transform is
 		rst_i : in std_logic;
 
 		data_i : in  vec32;
-		read_o : out std_logic;
+		valid_i : in std_logic;
+		ready_o : out std_logic;
 
 		data_o  : out vec32;
-		write_o : out std_logic
+		valid_o : out std_logic;
+		last_o : out std_logic;
+		ready_i : in std_logic;
 	);
 end vertex_transform;
 
@@ -117,6 +120,7 @@ architecture rtl of vertex_transform is
 		vertex_counter, vertex_data_counter, input_counter, proc_counter, veiwport_counter : integer;
 		fpu_opa, fpu_opb                                                                   : V3;
 		fpu_operation                                                                      : fpu_operation_vec;
+		data : vec32;
 	end record;
 
 	constant zero_vec_reg : reg_type := (module_state => reading,
@@ -137,7 +141,8 @@ architecture rtl of vertex_transform is
 			veiwport_counter    => 0,
 			fpu_opa             => (others => (others => '0')),
 			fpu_opb             => (others => (others => '0')),
-			fpu_operation       => (others => (others => '0'))
+			fpu_operation       => (others => (others => '0')),
+			data => (others => '0')
 		);
 
 	signal reg_in, reg : reg_type := zero_vec_reg;
@@ -174,7 +179,7 @@ begin
 		end if;
 	end process;
 
-	async : process (reg, rst_i, s_mul_res_ready, s_mul_load_ready, fpu_res_ready, data_i)
+	async : process (reg, rst_i, valid_i, ready_i, s_mul_res_ready, s_mul_load_ready, fpu_res_ready, data_i)
 
 		variable var : reg_type;
 
@@ -209,50 +214,60 @@ begin
 		mul_set   <= '0';
 		fpu_start <= (others => '0');
 
-		read_o  <= '0';
-		write_o <= '0';
+		ready_o  <= '0';
+		valid_o <= '0';
+		last_o <= '0';
 		data_o  <= (others => '0');
 
 		if (rst_i = '1') then
 			var := zero_vec_reg;
 		else
 			case (reg.module_state) is
-
 				when reading =>
 					case (reg.input_counter) is
 						--request
 						when 0 =>
-							read_o            <= '1';
-							var.input_counter := 1;
+							if (valid_i = '1') then
+								var.input_counter := 1;
+								ready_o <= '1';
+								var.data := data_i;
+							end if;
 
 						--processing
 						when 1 =>
-							var.input_counter := 0;
 							--if polygon vertices reading hasn't been started yet
 							if (reg.reading_vertex_data = '0') then
-								data_o  <= data_i;
-								write_o <= '1';
+								data_o  <= rec.data;
+								valid_o <= '1';
+
 								--let's read polygon data
-								if (data_i = GPU_PIPE_CMD_POLY_VERTEX) then
+								if (rec.data = GPU_PIPE_CMD_POLY_VERTEX) then
 									var.reading_vertex_data := '1';
+									last_o <= '1';
 									--report "End of polygon \n";
 								end if;
-								--if (data_i = GPU_PIPE_CMD_FRAME_END) then
+								--if (rec.data = GPU_PIPE_CMD_FRAME_END) then
 								--	report "End of frame \n";
 								--end if;
 
+								if (ready_i = '1') then
+									var.input_counter := 0;
+								end if;
+
 							--reading of polygon data
 							else
+								var.input_counter := 0;
+
 								if (reg.vertex_data_counter < NCOORDS + NCOLORS - 1) then
 									if (reg.vertex_data_counter < NCOORDS) then
-										var.coords(reg.vertex_data_counter) := data_i;
+										var.coords(reg.vertex_data_counter) := rec.data;
 									else
-										var.colors(reg.vertex_data_counter - NCOORDS) := data_i;
+										var.colors(reg.vertex_data_counter - NCOORDS) := rec.data;
 									end if;
 									var.vertex_data_counter := reg.vertex_data_counter + 1;
 
 								else
-									var.colors(reg.vertex_data_counter - NCOORDS) := data_i;
+									var.colors(reg.vertex_data_counter - NCOORDS) := rec.data;
 									var.vertex_data_counter                       := 0;
 									var.vertex_counter                            := reg.vertex_counter + 1;
 									var.module_state                              := processing;
@@ -368,23 +383,29 @@ begin
 					end case;
 
 				when writing =>
-					--writing data to fifo at each rising edge
 					if (reg.vertex_data_counter < NCOORDS + 1) then
 						data_o <= reg.w_coords(reg.vertex_data_counter);
 						--report (real'image(to_real(reg.w_coords(reg.vertex_data_counter))) & " ");
 						--if (reg.vertex_data_counter = NCOORDS) then
 						--	report "\n";
 						--end if;
+
 					elsif (reg.vertex_data_counter < NCOORDS + 1 + NCOLORS) then
 						data_o <= reg.colors(reg.vertex_data_counter - NCOORDS - 1);
 					end if;
-					write_o                 <= '1';
-					var.vertex_data_counter := reg.vertex_data_counter + 1;
 
-					--it's time to process next protion of data
+					valid_o <= '1';
 					if (reg.vertex_data_counter = NCOORDS + NCOLORS) then
-						var.module_state        := reading;
-						var.vertex_data_counter := 0;
+						last_o <= '1';
+					end if;
+					if (ready_i = '1') then
+						var.vertex_data_counter := reg.vertex_data_counter + 1;
+
+						--it's time to process next portion of data
+						if (reg.vertex_data_counter = NCOORDS + NCOLORS) then
+							var.module_state        := reading;
+							var.vertex_data_counter := 0;
+						end if;
 					end if;
 
 				when others =>
