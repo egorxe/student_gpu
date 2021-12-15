@@ -55,6 +55,17 @@ package gpu_pkg is
         a : float32;
     end record;
     
+    constant rast_vertex_default : rast_vertex :=
+        ( x => ZF,
+          y => ZF,
+          z => ZF,
+          w => ZF,
+          r => ZF,
+          g => ZF,
+          b => ZF,
+          a => ZF
+        );
+    
     type RV is array (0 to 2) of rast_vertex;
     
     type ef is record
@@ -117,7 +128,8 @@ package gpu_pkg is
     ------------------------------------------------------------------------
 
     function tf(x : real) return float32; -- alias with shorter name for real->float32
-
+    function itf(x : integer) return float32;
+    
     function to_slv(a          : integer; size : natural) return std_logic_vector;      -- integer->std_logic_vector
     function to_s_slv(intValue : integer; vecLength : integer) return std_logic_vector; -- integer->std_logic_vector
     function to_slv(value      : real) return std_logic_vector;                         -- real->std_logic_vector
@@ -148,6 +160,11 @@ package body gpu_pkg is
     ----------------------------------to float32------------------------------------------------
 
     function tf(x : real) return float32 is
+    begin
+        return to_float(x);
+    end;
+    
+    function itf(x : integer) return float32 is
     begin
         return to_float(x);
     end;
