@@ -53,11 +53,12 @@ begin
       case state is
         when IDLE =>
           if stb_i = '1' then
-            -- report "IDLE";
+            report "IDLE";
             cmd := data_i;
             -- report "data_i " & to_hstring(data_i);
             i := 0;
             j := 0;
+            report "cmd " & to_hstring(cmd);
             if not(cmd = GPU_PIPE_CMD_FRAGMENT) then
               data_o <= cmd;
               stb_o <= '1';
@@ -70,14 +71,15 @@ begin
             -- stb_o 
             ack_o <= '1';  
           end if;
+
         when SENT_ZERO =>
-        -- report "SENT_ZERO";
+        report "SENT_ZERO";
           data_o <= ZERO32;
           stb_o <= '1';
           rdr_o <= '0';
           state := Z_TO_ZERO;
+
         when Z_TO_ZERO =>
-        
           rdr_o <= '0';
           if i < SCREEN_WIDTH then
             if j < SCREEN_HEIGHT then
@@ -90,7 +92,7 @@ begin
           else
             rdr_o <= '1';
             state := IDLE;
-            -- report "Z_TO_ZERO_end";
+            report "Z_TO_ZERO_end";
           end if;
         
         when XREAD =>
@@ -113,17 +115,20 @@ begin
             z <= data_i;
             state := COLORREAD;
             ack_o <= '1';
+            rdr_o <= '0';
           end if;
         when COLORREAD =>
-        -- report "COLORREAD";
+        report "COLORREAD";
+        report "stb_i " & std_logic'image(stb_i);
           if stb_i = '1' then
             color <= data_i;
             state := CHECK;
             rdr_o <= '0';
             ack_o <= '1';
           end if;
+
         when CHECK =>
-        -- report "CHECK";
+        report "CHECK";
         -- report to_hstring(x);
         -- report to_hstring(y);
         -- report to_hstring(z);
@@ -137,13 +142,13 @@ begin
           end if;
           
         when XYOUT =>
-        -- report "XYOUT";
+        report "XYOUT";
           data_o <= x or (y sll 16);
           stb_o <= '1';
           rdr_o <= '0';
           state := COLOROUT;
         when COLOROUT =>
-        -- report "COLOROUT";
+        report "COLOROUT";
           data_o <= color;
           stb_o <= '1';
           -- rdr_o <= '0';

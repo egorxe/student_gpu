@@ -116,9 +116,10 @@ begin
                 file_open(fstatus, f_in, IN_FIFO_NAME, READ_MODE);
             end if;
         else
+            -- report "rdr_o " & std_logic'image(rdr_out);
             if (rdr_out = '1') then
                 ReadUint32(f_in, datainbuff);
-                -- report "read " & to_hstring(datainbuff);
+                report "read " & to_hstring(datainbuff);
                 data_in <= datainbuff;
                 stb_in <= '1';
             else
