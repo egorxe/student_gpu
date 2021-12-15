@@ -12,3 +12,4 @@ src/rtl/test_vertices/ghdl_sim/test_vertices_fifotb
 *.toml
 *.ghw
 .vscode
+src/rtl/fragment_ops/ghdl_sim/fragment_ops_tb
