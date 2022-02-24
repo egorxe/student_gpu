@@ -28,7 +28,7 @@ entity rasteriser is
     );
     Port (  clk : in std_logic;
             rst : in std_logic;
-            vec_i : in RV;
+            vec_i : in RV; -- Data about vertex
             vec_o : out RV;
             valid_i : in std_logic;
         );
@@ -40,21 +40,24 @@ architecture Behavioral of rasteriser is
 type vec4 is array (0 to 3) of float32;
 type bound is array (0 to 4) of float32;
 
-component edge_function is
+
+--Found where is the point related to line
+
+component edge_function is 
     Port (
-            clk        : in std_logic;
-            rst        : in std_logic;
+            clk_i        : in std_logic;
+            rst_i        : in std_logic;
 
-            data_valid : in  std_logic;
-            x          : in float32;
-            y          : in float32;
-            v0x        : in float32;
-            v0y        : in float32;
-            v1x        : in float32;
-            v1y        : in float32;
+            valid_i : in  std_logic;
+            x_i          : in float32;
+            y_i          : in float32;
+            v0x_i        : in float32;
+            v0y_i        : in float32;
+            v1x_i        : in float32;
+            v1y_i        : in float32;
 
-            result : out std_logic;
-            ready : out std_logic;
+            result_o     : out float32;
+            ready_o      : out std_logic;
         );
 
 end component;
@@ -63,6 +66,7 @@ type file_real is file of float32;
 
 type ef_array is array (0 to n-1) of ef; 
 type w_array  is array (0 to n-1) of float32;
+type v_array  is array (0 to n-1) of rast_vertex;
 
 type state is (idle, framing, calculate_edge_function);
 type reg_type is record
@@ -81,10 +85,12 @@ type reg_type is record
     w2        : w_array;
     valid_buf : std_logic;
     mask      : std_logic; 
+    vec_out   : v_array;
     
 end record;
 
 signal result_buf : w_array;
+
 
 
 
@@ -131,7 +137,7 @@ begin
                     v.vec_buf := vec_i;
                     v.state := framing;
                 end if;
-                
+      
             when framing =>
             
                 if v.vec_buf(0).x > v.vec_buf(1).x then
@@ -187,12 +193,45 @@ begin
                 if (v.x_max >= 0) and (v.y_max >= 0) and (v.x_min <= max_width) and (v.y_min <= max_heigh) then
                     v.i := to_uint(v.x_min);
                     v.j := to_uint(v.y_min);
-                    v.state := calculate_edge_function;
+                    v.state := calculate_edge_function_0;
                 else
-                    ...
+                    -- ...
                     v.state := idle;
             
             when calculate_edge_function_0 => 
+                if v.y < to_uint(v.y_max) then  
+                        for i in 0 to n - 1 loop
+                            v.ver_ef(i).x := itf(v.x);
+                            v.ver_ef(i).y := itf(v.y);
+                            v.ver_ef(i).a1x := v.vec_buf(0).x;
+                            v.ver_ef(i).a2x := v.vec_buf(1).x;
+                            v.ver_ef(i).a1y := v.vec_buf(0).y;
+                            v.ver_ef(i).a2y := v.vec_buf(1).y;
+                            v.x := v.x + 1;
+                            
+                            if (v.x = to_uint(v.x_max))then
+                                v.x := v.x_min;
+                                v.y := v.y + 1;
+                            end if;
+                            
+                        end loop;  
+                          
+                        v.valid_buf := '1';
+                        v.state := waiting_0;                    
+                end if;
+                
+            when waiting_0 =>
+                v.valid_buf := '0';
+                if ready_buf = '1' then
+                    for i in 0 to n - 1 loop
+                        v.ver_ef(i).w0 := result_buf(i);
+                    end loop;
+                    
+                    v.state := calculate_edge_function_1;
+
+                end if;
+                
+            when calculate_edge_function_1 => 
                 if v.y < to_uint(v.y_max) then  
                         for i in 0 to n - 1 loop
                             v.ver_ef(i).x := itf(v.x);
@@ -210,20 +249,63 @@ begin
                             
                         end loop;    
                         v.valid_buf := '1';
-                        v.state := waiting_0;                    
+                        v.state := waiting_1;                    
                 end if;
                 
-            when waiting_0 =>
+            when waiting_1 =>
+                v.valid_buf := '0';
                 if ready_buf = '1' then
                     for i in 0 to n - 1 loop
-                        v.w0(i) := result_buf(i);
+                        v.ver_ef(i).w1 := result_buf(i);
                     end loop;
                     
-                    v.state := calculate_edge_function_1;
+                    v.state := calculate_edge_function_2;
 
+                end if; 
+
+            when calculate_edge_function_2 => 
+                if v.y < to_uint(v.y_max) then  
+                        for i in 0 to n - 1 loop
+                            v.ver_ef(i).x := itf(v.x);
+                            v.ver_ef(i).y := itf(v.y);
+                            v.ver_ef(i).a1x := v.vec_buf(2).x;
+                            v.ver_ef(i).a2x := v.vec_buf(0).x;
+                            v.ver_ef(i).a1y := v.vec_buf(2).y;
+                            v.ver_ef(i).a2y := v.vec_buf(0).y;
+                            v.x := v.x + 1;
+                            
+                            if (v.x = to_uint(v.x_max))then
+                                v.x := v.x_min;
+                                v.y := v.y + 1;
+                            end if;
+                            
+                        end loop;    
+                        v.valid_buf := '1';
+                        v.state := waiting_2;                    
                 end if;
                 
-            when calculate_edge_function_1 => 
+            when waiting_2 =>
+                v.valid_buf := '0';
+                if ready_buf = '1' then
+                    for i in 0 to n - 1 loop
+                        v.ver_ef(i).w2 := result_buf(i);
+                    end loop;
+                    
+                    if v.y < v.y_max then
+                        v.state := edging;
+                    else 
+                        v.state := --///
+
+                end if;
+
+
+            when edging =>
+                
+                for i in 0 to n - 1 loop
+
+                    if ((v.ver_ef(i).w0 >= 0) and (v.ver_ef(i).w1 >= 0) and (v.ver_ef(i).w2 >= 0)) then
+                        v.vec_out(i).x := v.ver_ef(i).x;
+                        v.vec_out(i).y := v.ver_ef(i).y;
                         
  end Behavioral;                   
                         
