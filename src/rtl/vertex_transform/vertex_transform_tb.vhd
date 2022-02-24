@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Nov 17 19:06:31 2021
--- Last update : Wed Dec 15 19:34:32 2021
+-- Last update : Thu Feb 24 11:48:59 2022
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -19,10 +19,6 @@
 -- on revision history.
 -------------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
---------------------TODO: NEED TO MAKE IT RELEVANT
---------------------------------------------------------------------------------
-  
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -58,19 +54,26 @@ architecture testbench of vertex_transform_tb is
 			clk_i   : in  std_logic;
 			rst_i   : in  std_logic;
 			data_i  : in  vec32;
-			read_o  : out std_logic;
+			valid_i : in  std_logic;
+			ready_o : out std_logic;
 			data_o  : out vec32;
-			write_o : out std_logic
+			valid_o : out std_logic;
+			ready_i : in  std_logic;
+			last_o  : out std_logic
 		);
-	end component;
+	end component vertex_transform;	
 
 	-- Testbench DUT ports
 	signal clk_i   : std_logic := '0';
 	signal rst_i   : std_logic := '1';
 	signal data_i  : vec32     := (others => '0');
-	signal read_o  : std_logic;
+	signal valid_i : std_logic := '0';
+	signal ready_o : std_logic;
 	signal data_o  : vec32;
-	signal write_o : std_logic;
+	signal valid_o : std_logic;
+	signal ready_i : std_logic := '0';
+	signal last_o  : std_logic;	
+
 	signal s_i     : integer := 0;
 
 	-- Other constants
@@ -88,6 +91,9 @@ begin
 		variable fInStatus, fOutStatus : file_open_status := STATUS_ERROR;
 		variable v_data_i              : vec32 := (others => '0');
 	begin
+		valid_i <= '1';
+		ready_i <= '1';
+
 		if rising_edge(clk_i) then
 			if rst_i = '1' then
 				-- open output and input files once
@@ -101,15 +107,16 @@ begin
 
 			else
 				-- writing
-				if (write_o = '1') then
+				if (valid_o = '1') then
 					WriteUint32(f_out, data_o);
+
 					if (data_o = GPU_PIPE_CMD_FRAME_END) then
 						flush(f_out);
 					end if;
 				end if;
 
 				--reading
-				if (read_o = '1') then
+				if (ready_o = '1') then
 					ReadUint32(f_in, v_data_i);
 				end if;
 
@@ -123,6 +130,7 @@ begin
 	-----------------------------------------------------------
 	-- Entity Under Test
 	-----------------------------------------------------------
+
 	DUT : vertex_transform
 		generic map (
 			SCREEN_WIDTH  => SCREEN_WIDTH,
@@ -132,9 +140,12 @@ begin
 			clk_i   => clk_i,
 			rst_i   => rst_i,
 			data_i  => data_i,
-			read_o  => read_o,
+			valid_i => valid_i,
+			ready_o => ready_o,
 			data_o  => data_o,
-			write_o => write_o
-		);
+			valid_o => valid_o,
+			ready_i => ready_i,
+			last_o  => last_o
+		);	
 
 end architecture testbench;
