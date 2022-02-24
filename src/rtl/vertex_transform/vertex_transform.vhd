@@ -19,13 +19,13 @@ entity vertex_transform is
 		rst_i : in std_logic;
 
 		data_i : in  vec32;
-		valid_i : in std_logic;
-		ready_o : out std_logic;
+		valid_i : in std_logic; --input handshake mechanism
+		ready_o : out std_logic; --input handshake mechanism
 
 		data_o  : out vec32;
-		valid_o : out std_logic;
-		last_o : out std_logic;
-		ready_i : in std_logic;
+		valid_o : out std_logic;  --output handshake mechanism
+		ready_i : in std_logic; --output handshake mechanism
+		last_o : out std_logic --only for AXI-Stream wrapper
 	);
 end vertex_transform;
 
@@ -227,9 +227,9 @@ begin
 					case (reg.input_counter) is
 						--request
 						when 0 =>
+							ready_o <= '1';
 							if (valid_i = '1') then
 								var.input_counter := 1;
-								ready_o <= '1';
 								var.data := data_i;
 							end if;
 
@@ -237,21 +237,24 @@ begin
 						when 1 =>
 							--if polygon vertices reading hasn't been started yet
 							if (reg.reading_vertex_data = '0') then
-								data_o  <= rec.data;
+								data_o  <= reg.data;
 								valid_o <= '1';
 
 								--let's read polygon data
-								if (rec.data = GPU_PIPE_CMD_POLY_VERTEX) then
-									var.reading_vertex_data := '1';
+								if (reg.data = GPU_PIPE_CMD_POLY_VERTEX) then
 									last_o <= '1';
 									--report "End of polygon \n";
 								end if;
-								--if (rec.data = GPU_PIPE_CMD_FRAME_END) then
+								--if (reg.data = GPU_PIPE_CMD_FRAME_END) then
 								--	report "End of frame \n";
 								--end if;
 
 								if (ready_i = '1') then
 									var.input_counter := 0;
+
+									if (reg.data = GPU_PIPE_CMD_POLY_VERTEX) then
+										var.reading_vertex_data := '1';
+									end if;
 								end if;
 
 							--reading of polygon data
@@ -260,14 +263,14 @@ begin
 
 								if (reg.vertex_data_counter < NCOORDS + NCOLORS - 1) then
 									if (reg.vertex_data_counter < NCOORDS) then
-										var.coords(reg.vertex_data_counter) := rec.data;
+										var.coords(reg.vertex_data_counter) := reg.data;
 									else
-										var.colors(reg.vertex_data_counter - NCOORDS) := rec.data;
+										var.colors(reg.vertex_data_counter - NCOORDS) := reg.data;
 									end if;
 									var.vertex_data_counter := reg.vertex_data_counter + 1;
 
 								else
-									var.colors(reg.vertex_data_counter - NCOORDS) := rec.data;
+									var.colors(reg.vertex_data_counter - NCOORDS) := reg.data;
 									var.vertex_data_counter                       := 0;
 									var.vertex_counter                            := reg.vertex_counter + 1;
 									var.module_state                              := processing;
@@ -394,10 +397,11 @@ begin
 						data_o <= reg.colors(reg.vertex_data_counter - NCOORDS - 1);
 					end if;
 
-					valid_o <= '1';
 					if (reg.vertex_data_counter = NCOORDS + NCOLORS) then
 						last_o <= '1';
 					end if;
+
+					valid_o <= '1';
 					if (ready_i = '1') then
 						var.vertex_data_counter := reg.vertex_data_counter + 1;
 

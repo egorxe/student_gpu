@@ -18,7 +18,7 @@ entity vertex_transform_AXIS_wrapper is
 		s_axis_ready_o : out global_axis_miso_type;
 
 		m_axis_o: out global_axis_mosi_type;
-		m_axis_ready_i: in global_axis_miso_type;
+		m_axis_ready_i: in global_axis_miso_type
 	);
 end vertex_transform_AXIS_wrapper;
 
