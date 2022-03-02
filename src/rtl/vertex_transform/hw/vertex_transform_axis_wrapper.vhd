@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.gpu_pkg.all;
 
-entity vertex_transform_AXIS_wrapper is
+entity vertex_transform_axis_wrapper is
 	generic (
 		SCREEN_WIDTH  : integer := 640;
 		SCREEN_HEIGHT : integer := 480
@@ -14,13 +14,32 @@ entity vertex_transform_AXIS_wrapper is
 		clk_i : in std_logic;
 		rst_i : in std_logic;
 
-		s_axis_i: in global_axis_mosi_type;
-		s_axis_ready_o : out global_axis_miso_type;
+		--s_axis_i: in global_axis_mosi_type;
+		--s_axis_ready_o : out global_axis_miso_type;
 
-		m_axis_o: out global_axis_mosi_type;
-		m_axis_ready_i: in global_axis_miso_type
+		--m_axis_o: out global_axis_mosi_type;
+		--m_axis_ready_i: in global_axis_miso_type
+
+		s_axis_tdata         : in  std_logic_vector(GLOBAL_AXIS_DATA_WIDTH - 1 downto 0);
+        s_axis_tkeep         : in  std_logic_vector(3 downto 0);
+        s_axis_tvalid        : in  std_logic;
+        s_axis_tlast         : in  std_logic;
+        s_axis_tid           : in  std_logic_vector(3 downto 0);
+        s_axis_tdest         : in  std_logic_vector(3 downto 0);
+        s_axis_tuser         : in  std_logic_vector(3 downto 0);
+        s_axis_tready        : out std_logic;
+        
+        m_axis_tdata        : out std_logic_vector(GLOBAL_AXIS_DATA_WIDTH - 1 downto 0);
+        m_axis_tkeep        : out std_logic_vector(3 downto 0);
+        m_axis_tvalid       : out std_logic;
+        m_axis_tlast        : out std_logic;
+        m_axis_tid          : out std_logic_vector(3 downto 0);
+        m_axis_tdest        : out std_logic_vector(3 downto 0);
+        m_axis_tuser        : out std_logic_vector(3 downto 0);
+        m_axis_tready       : in  std_logic
+
 	);
-end vertex_transform_AXIS_wrapper;
+end vertex_transform_axis_wrapper;
 
 architecture vertex_transform_AXIS_wrapper_arc of vertex_transform_AXIS_wrapper is
 
@@ -79,10 +98,10 @@ architecture vertex_transform_AXIS_wrapper_arc of vertex_transform_AXIS_wrapper 
 begin
 
 	--unused in slave: tkeep, tlast, tid, tdest, tuser
-	m_axis_o.tkeep <= (others => '1');
-	m_axis_o.tid <= (others => '0');
-	m_axis_o.tdest <= (others => '0');
-	m_axis_o.tuser <= (others => '0');
+	m_axis_tkeep <= (others => '1');
+	m_axis_tid <= (others => '0');
+	m_axis_tdest <= (others => '0');
+	m_axis_tuser <= (others => '0');
 
 	vertex_transform_unit : vertex_transform
 		generic map (
@@ -92,14 +111,41 @@ begin
 		port map (
 			clk_i   => clk_i,
 			rst_i   => rst_i,
-			data_i  => s_axis_i.axis_tdata,
-			valid_i => s_axis_i.axis_tvalid,
-			ready_o => s_axis_ready_o.axis_tready,
-			data_o  => m_axis_o.axis_tdata,
-			valid_o => m_axis_o.axis_tvalid,
-			last_o  => m_axis_o.axis_tlast,
-			ready_i => m_axis_ready_i.axis_tready
-		);	
+			data_i  => s_axis_tdata,
+			valid_i => s_axis_tvalid,
+			ready_o => s_axis_tready,
+			data_o  => m_axis_tdata,
+			valid_o => m_axis_tvalid,
+			last_o  => m_axis_tlast,
+			ready_i => m_axis_tready
+		);
+
+	----------------------------------------------------------------------------
+
+	--unused in slave: tkeep, tlast, tid, tdest, tuser
+	--m_axis_o.axis_tkeep <= (others => '1');
+	--m_axis_o.axis_tid <= (others => '0');
+	--m_axis_o.axis_tdest <= (others => '0');
+	--m_axis_o.axis_tuser <= (others => '0');
+
+	--vertex_transform_unit : vertex_transform
+	--	generic map (
+	--		SCREEN_WIDTH  => SCREEN_WIDTH,
+	--		SCREEN_HEIGHT => SCREEN_HEIGHT
+	--	)
+	--	port map (
+	--		clk_i   => clk_i,
+	--		rst_i   => rst_i,
+	--		data_i  => s_axis_i.axis_tdata,
+	--		valid_i => s_axis_i.axis_tvalid,
+	--		ready_o => s_axis_ready_o.axis_tready,
+	--		data_o  => m_axis_o.axis_tdata,
+	--		valid_o => m_axis_o.axis_tvalid,
+	--		last_o  => m_axis_o.axis_tlast,
+	--		ready_i => m_axis_ready_i.axis_tready
+	--	);
+
+	-------------------------------------------------------------------------	
 
 	--s_axis_ready_o <= reg_in.s_axis_ready;
 	--m_axis_o <= reg_in.m_axis;
