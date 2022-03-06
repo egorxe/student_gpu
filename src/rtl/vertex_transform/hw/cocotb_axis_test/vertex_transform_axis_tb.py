@@ -66,10 +66,18 @@ def intToBytes(i):
 def bytesToInt(f):
     return int.from_bytes(f, byteorder='little', signed=False)
 
+#for human reading
+def intToBytesBigEndian(i):
+    return (i).to_bytes(BYTES_PER_FRAME, byteorder='big')
+
+def bytesToIntBigEndian(f):
+    return int.from_bytes(f, byteorder='big', signed=False)
+
 #tester class
 class Vt_axi_tester:
 	def __init__(self, dut):
 		self.dut = dut;
+		self.received_frames = 0
 
 		cocotb.start_soon(Clock(dut.clk_i, 10, units = "ns").start())
 
@@ -90,7 +98,7 @@ class Vt_axi_tester:
 	async def sendInt(self, data):
 		frame = AxiStreamFrame(intToBytes(data), tuser = 0, tdest = 0)
 		await self.axis_source.send(frame)
-		print(intToBytes(data), data, "was sent")
+		print(intToBytes(data), "was sent")
 
 	async def sendFloat(self, data):
 		await self.sendInt(toSignal32(data))
@@ -103,17 +111,24 @@ class Vt_axi_tester:
 		await self.sendFloat(point.g)
 		await self.sendFloat(point.b)
 		await self.sendFloat(point.alpha)
+		print("Point was sent")
 
 	async def sendPolygon(self, polygon):
 		await self.sendInt(GPU_PIPE_CMD_POLY_VERTEX)
 		await self.sendVertice(polygon.p1)
 		await self.sendVertice(polygon.p2)
 		await self.sendVertice(polygon.p3)
+		print("Polygon was sent")
 
 	async def startReception(self):
 		while True:
 			frame = await self.axis_sink.read()
-			print(frame, bytesToInt(frame), "was received")
+			self.received_frames += 1
+			print(frame, "was received,", self.received_frames, "frames were received at all")
+
+	async def checkReception(self):
+		while self.received_frames < 4:
+			await RisingEdge(self.dut.clk_i)
 
 #testbench
 @cocotb.test()
@@ -127,3 +142,5 @@ async def testbech(dut):
 	cocotb.start_soon(tester.startReception())
 	
 	await tester.sendPolygon(polygon)
+
+	await tester.checkReception();
