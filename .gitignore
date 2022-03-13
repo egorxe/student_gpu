@@ -15,4 +15,4 @@ src/rtl/test_vertices/ghdl_sim/test_vertices_fifotb
 *.log
 *.orig
 src/rtl/fragment_ops/ghdl_sim/fragment_ops_tb
-src/rtl/vertex_transform/cocotb/
+src/rtl/vertex_transform/cocotbsim/
