@@ -10,7 +10,7 @@
         },
         {
             "name"      : "Matrix vertex transformation",
-            "binary"    : "stages/rtl/vertex_transform/ghdl_sim/stage_sim.sh"
+            "binary"    : "stages/rtl/vertex_transform/hw/ghdl_sim/stage_sim.sh"
         },
         {
             "name"      : "Rasterizer",
