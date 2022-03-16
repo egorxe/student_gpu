@@ -41,8 +41,7 @@ component fragment_ops is
         data_o      : out vec32;
         stb_o       : out std_logic;
 
-        ack_o       : out std_logic;
-        rdr_o       : out std_logic
+        ack_o       : out std_logic
     );
 end component;
 
@@ -50,7 +49,9 @@ begin
 
 process(clk_i)
 begin
-    ...
+    if Rising_edge(clk_i) then
+        
+    end if;
 end process;
 
 end axistire;
