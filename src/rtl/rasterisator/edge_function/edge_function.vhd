@@ -19,13 +19,13 @@ entity edge_function is
         input_ready_o : out std_logic;
         result_ready_o : out std_logic;
 
-        x_i   : in float32;
-        y_i   : in float32;
-        v0x_i : in float32;
-        v0y_i : in float32;
-        v1x_i : in float32;
-        v1y_i : in float32;
-        result_o : out float32  
+        x_i   : in vec32;
+        y_i   : in vec32;
+        v0x_i : in vec32;
+        v0y_i : in vec32;
+        v1x_i : in vec32;
+        v1y_i : in vec32;
+        result_o : out vec32  
 	);
 end edge_function;
 
@@ -59,24 +59,24 @@ architecture behavioral of edge_function is
 		) return boolean is
 	begin
 		for i in 0 to x'length - 1 loop
-			if (x(i) == '0') then
+			if (x(i) = '0') then
 				return false;
 			end if;
-
-			return true;
 		end loop;
+
+		return true;
 	end function;
 
 	function is_all_false(x : std_logic_vector
 		) return boolean is
 	begin
 		for i in 0 to x'length - 1 loop
-			if (x(i) == '1') then
+			if (x(i) = '1') then
 				return false;
 			end if;
-
-			return true;
 		end loop;
+
+		return true;
 	end function;
 
 	type V2 is array (0 to 1) of vec32;
@@ -106,11 +106,10 @@ architecture behavioral of edge_function is
 									mult2_ready => (others => '1'),
 									mult2_buf_free => '1',
 
-									min3_opa => (others => (others => '0')), 
-									min3_opb => (others => (others => '0')), 
-									min3_output => (others => (others => '0')),
-									min3_ready => '1',
-									min3_buf_free => '1'
+									min3_opa => (others => '0'), 
+									min3_opb => (others => '0'), 
+									min3_output => (others => '0'),
+									min3_ready => '1'
 									);
 
 	signal rec, rec_in : rec_type := rst_rec;  
@@ -205,7 +204,7 @@ begin
 		end if;
 
 		result_o <= var.min3_output;
-		input_ready_o <= var.mult2_ready;
+		input_ready_o <= var.mult2_ready(1) and var.mult2_ready(0);
 		result_ready_o <= var.min3_ready;
 		rec_in <= var;
 	end process;
