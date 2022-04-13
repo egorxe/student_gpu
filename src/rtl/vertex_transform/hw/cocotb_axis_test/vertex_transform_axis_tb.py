@@ -5,11 +5,17 @@ from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStrea
 
 import struct
 import numpy as np
+import ctypes as ct
+
+#parameters
+POLYGONS_TO_SEND = 1
 
 #configuration
+WRD_P_PLGN = 22
+WRD_P_WPLGN = 25
+WRD_P_VRTX = 7
+WRD_P_WVRTX = 8
 BYTES_PER_WORD = 4
-
-#constants
 GPU_PIPE_CMD_POLY_VERTEX = int("FFFFFF00", 16)
 
 #data structures
@@ -31,15 +37,15 @@ class Polygon:
 
 ###conversion functions
 #common
-def floatToBin32Str(num):
-    return ''.join('{:0>8b}'.format(c) for c in struct.pack('!f', num))
+def float32ToBin32Str(num):
+    return ''.join('{:0>8b}'.format(c) for c in struct.pack('!f', num)) #empty bits equal 0, alignement to the right border, 8-bits width
 
-def intToBin32Str(num):
-    return ''.join('{:0>8b}'.format(c) for c in struct.pack('!l', num))
+def int8ToBin32Str(num):
+    return ''.join('{:0>8b}'.format(c) for c in struct.pack('!i', num))
 
 #pyFloat and int (actually double in C terms) to signal
 def floatToSignal32(num):
-    return int(floatToBin32Str(num), 2)
+    return int(float32ToBin32Str(num), 2)
 
 #signal to pyFloat (actually double in C terms)
 def bin32StrToBin64Str(value):
@@ -56,11 +62,11 @@ def bin32StrToBin64Str(value):
     return sign + exponent64 + mantissa64
 
 def bin64StrToFloat64(value):
-    hx = hex(int(value, 2))   
-    return struct.unpack("d", struct.pack("q", int(hx, 16)))[0]
+    return struct.unpack("d", struct.pack("q", int(value, 2)))[0] #packing as long long and unpacking as C-double
 
+#signal - float32 as int
 def signal32ToFloat64(value):
-    return bin64StrToFloat64(bin32StrToBin64Str(floatToBin32Str(value)))
+    return bin64StrToFloat64(bin32StrToBin64Str(float32ToBin32Str(value)))
 
 #for AXI-Stream
 def intToBytes(i):
@@ -84,7 +90,9 @@ class Vt_axi_tester:
 		self.received_words = 0
 		self.sent_data = []
 		self.received_data = [] 
-
+		self.sent_point = (ct.c_float * 3)()
+		self.processed_point = (ct.c_float * 4)()
+		
 		cocotb.start_soon(Clock(dut.clk_i, 10, units = "ns").start())
 
 		self.axis_source = AxiStreamSource(AxiStreamBus.from_prefix(dut, "s_axis"), dut.clk_i, dut.rst_i)
@@ -130,49 +138,63 @@ class Vt_axi_tester:
 	async def startReception(self):
 		while True:
 			frame = await self.axis_sink.read()
-			wordAsRevStr = ""
+			wordAsStr = ""
 			byte_num = 0
 			
 			for byte in frame:
-				wordAsRevStr += (intToBin32Str(byte))[24:32]
-				print(intToBin32Str(byte))
+				wordAsStr = (int8ToBin32Str(byte))[24:32] + wordAsStr #order matters
+				print(int8ToBin32Str(byte)[24:32])
 				byte_num += 1
 
 				if (byte_num % BYTES_PER_WORD == 0):
-					wordAsStr = wordAsRevStr[::-1]
 					word = int(wordAsStr, 2)
 					self.received_words += 1
 					self.received_data.append(word)
-					print(wordAsStr, "was received,", self.received_words, "words were received at all")
-					wordAsRevStr = ""
+					print(wordAsStr, hex(word), "was received,", self.received_words, "words were received at all")
+					wordAsStr =  ""
 
 			self.received_frames += 1
 			print(frame, "was received,", self.received_frames, "frames were received at all")
 
 	async def checkReception(self):
-		while self.received_frames < 4:
+		vertex_transform = ct.CDLL('../hw/cocotb_axis_test/vertex_transform.so')
+		process_vertex = vertex_transform.process_vertex
+		process_vertex.argtypes= [ct.POINTER(ct.c_float), ct.POINTER(ct.c_float)]
+
+		while self.received_words < POLYGONS_TO_SEND*WRD_P_WPLGN: #1 + 8*3
 			await RisingEdge(self.dut.clk_i)
 
-		for i in range(len(self.received_data)):
-			#passing weight of verice
-			if (i == 4 or i == 12 or i == 20):
-				print("Checking word", i, "Got", hex(self.received_data[i]))
+		for polyCnt in range(POLYGONS_TO_SEND):
+			print("Polygon", polyCnt)
+			print("Start code expected", hex(GPU_PIPE_CMD_POLY_VERTEX), "received", hex(self.received_data[polyCnt*WRD_P_WPLGN]))
+			assert self.received_data[polyCnt*WRD_P_WPLGN] == GPU_PIPE_CMD_POLY_VERTEX, "GPU_PIPE_CMD_POLY_VERTEX wasn't transmitted"
 
-			elif (i < 4):
-				print("Checking word", i, "Got", hex(self.received_data[i]), "Should be", hex(self.sent_data[i]))
-				#assert(self.received_data[i] == self.sent_data[i])
+			for pointCnt in range(3):
+				print("Point", pointCnt)
+				for i in range(3):
+					self.sent_point[i] = (ct.c_float)(self.sent_data[i + WRD_P_VRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt])
+				
+				#vertices processing in C code
+				process_vertex(ct.cast(self.sent_point, ct.POINTER(ct.c_float)), 
+								ct.cast(self.processed_point, ct.POINTER(ct.c_float)))
+					
+				for i in range(4):
+					print("coordinate", 
+							i, 
+							"got", 
+							signal32ToFloat64(self.received_data[i + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]),
+							hex(self.received_data[i + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]), 
+							"expected", 
+							self.processed_point[i],
+							hex(floatToSignal32(self.processed_point[i]))
+							)
+					#assert self.received_data[i + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt] == floatToSignal32(self.processed_point[i]), "Answers are different"
 
-			elif (i < 12):
-				print("Checking word", i, "Got", hex(self.received_data[i]), "Should be", hex(self.sent_data[i - 1]))
-				#assert(self.received_data[i] == self.sent_data[i - 1])
-
-			elif (i < 20):
-				print("Checking word", i, "Got", hex(self.received_data[i]), "Should be", hex(self.sent_data[i - 2]))
-				#assert(self.received_data[i] == self.sent_data[i - 2])
-
-			else:
-				print("Checking word", i, "Got", hex(self.received_data[i]), "Should be", hex(self.sent_data[i - 3]))
-				#assert(self.received_data[i] == self.sent_data[i - 3])
+				for i in range(4):
+					print("color", i,
+							"got", hex(self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]),
+							"expected", hex(self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt]))
+					#assert self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt] == self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt], "Answers are different"
 
 #testbench
 @cocotb.test()
@@ -185,6 +207,7 @@ async def testbech(dut):
 
 	cocotb.start_soon(tester.startReception())
 	
-	await tester.sendPolygon(polygon)
+	for i in range(POLYGONS_TO_SEND):
+		await tester.sendPolygon(polygon)
 
 	await tester.checkReception();

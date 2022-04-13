@@ -74,35 +74,35 @@ architecture rtl of vertex_transform is
 		);
 	end component fpu;
 
-	--constant model_matrix : M44 := (
-	--		(to_slv(0.804738), to_slv(-0.310617), to_slv(0.505879), to_slv(0.0)),
-	--		(to_slv(0.505879), to_slv(0.804738), to_slv(-0.310617), to_slv(0.0)),
-	--		(to_slv(-0.310617), to_slv(0.505879), to_slv(0.804738), to_slv(-3.0)),
-	--		(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
-	--	);
-
-	--constant proj_matrix : M44 := (
-	--		(to_slv(1.810660), 	to_slv(0.0), 		to_slv(0.0), 		to_slv(0.0)),
-	--		(to_slv(0.0), 		to_slv(2.414214), 	to_slv(0.0), 		to_slv(0.0)),
-	--		(to_slv(0.0), 		to_slv(0.0), 		to_slv(-1.020202), 	to_slv(-0.202020)),
-	--		(to_slv(0.0), 		to_slv(0.0), 		to_slv(-1.000000), 	to_slv(0.0))
-	--	);
-
-	--for test
 	constant model_matrix : M44 := (
-		(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
-		(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
-		(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(-3.0)),
-		(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
+			(to_slv(0.804738), to_slv(-0.310617), to_slv(0.505879), to_slv(0.0)),
+			(to_slv(0.505879), to_slv(0.804738), to_slv(-0.310617), to_slv(0.0)),
+			(to_slv(-0.310617), to_slv(0.505879), to_slv(0.804738), to_slv(-3.0)),
+			(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
 		);
 
-	--for test
 	constant proj_matrix : M44 := (
-		(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
-		(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
-		(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(0.0)),
-		(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
+			(to_slv(1.810660), 	to_slv(0.0), 		to_slv(0.0), 		to_slv(0.0)),
+			(to_slv(0.0), 		to_slv(2.414214), 	to_slv(0.0), 		to_slv(0.0)),
+			(to_slv(0.0), 		to_slv(0.0), 		to_slv(-1.020202), 	to_slv(-0.202020)),
+			(to_slv(0.0), 		to_slv(0.0), 		to_slv(-1.000000), 	to_slv(0.0))
 		);
+
+	----for test
+	--constant model_matrix : M44 := (
+	--	(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(-3.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
+	--	);
+
+	----for test
+	--constant proj_matrix : M44 := (
+	--	(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(0.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
+	--	);
 
 	type V3 is array (0 to 2) of vec32;
 	type fpu_operation_vec is array (0 to 2) of std_logic_vector(2 downto 0);
