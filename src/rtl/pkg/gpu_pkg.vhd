@@ -25,6 +25,8 @@ package gpu_pkg is
     constant ZERO32     : std_logic_vector(31 downto 0) := (others => '0');
     constant ONE32      : std_logic_vector(31 downto 0) := ("0" & "01111111" & "00000000000000000000000");
     constant TWO32      : std_logic_vector(31 downto 0) := ("0" & "10000000" & "00000000000000000000000");
+    constant MINUSONE32 : std_logic_vector(31 downto 0) := ("1" & "01111111" & "00000000000000000000000");
+    constant MINUSTWO32 : std_logic_vector(31 downto 0) := ("1" & "10000000" & "00000000000000000000000");
     constant NCOORDS    : integer                       := 3;
     constant NCOLORS    : integer                       := 4;
     constant NVERTICES  : integer                       := 3;

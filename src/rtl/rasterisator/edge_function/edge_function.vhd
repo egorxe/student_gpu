@@ -16,8 +16,7 @@ entity edge_function is
 		rst_i : in std_logic;
 
 		valid_i : in  std_logic;
-        input_ready_o : out std_logic;
-        result_ready_o : out std_logic;
+        ready_o : out std_logic;
 
         x_i   : in vec32;
         y_i   : in vec32;
@@ -92,6 +91,8 @@ architecture behavioral of edge_function is
 
 		min3_opa, min3_opb, min3_output : vec32;
 		min3_ready : std_logic; --needed for initial conditions
+
+		result_ready : std_logic;
 	end record;
 
 	constant rst_rec : rec_type := (min1_opa => (others => (others => '0')), 
@@ -109,7 +110,9 @@ architecture behavioral of edge_function is
 									min3_opa => (others => '0'), 
 									min3_opb => (others => '0'), 
 									min3_output => (others => '0'),
-									min3_ready => '1'
+									min3_ready => '1',
+
+									result_ready => '0'
 									);
 
 	signal rec, rec_in : rec_type := rst_rec;  
@@ -140,7 +143,7 @@ begin
 		end if;
 	end process;
 
-	async : process(rec, valid_i, x_i, y_i, v0x_i, v0y_i, v1x_i, v1y_i)
+	async : process(rec, valid_i, x_i, y_i, v0x_i, v0y_i, v1x_i, v1y_i, min1_ready, mult2_ready, min3_ready)
 		variable var : rec_type := rst_rec;
 
 	begin
@@ -162,6 +165,8 @@ begin
 			var.min1_opb(3) := v0x_i;
 			min1_start <= '1';
 			var.min1_ready := (others => '0');
+
+			var.result_ready := '0';
 		end if;
 
 		if (is_all_true(min1_ready) and is_all_false(rec.min1_ready) and rec.min1_buf_free = '1') then
@@ -175,8 +180,8 @@ begin
 		if (rec.min1_buf_free = '0' and is_all_true(rec.mult2_ready) and rec.mult2_buf_free = '1') then
 			 var.mult2_opa(0) := rec.min1_output(0); --(P.x - V0.x)*(V1.y - V0.y)
 			 var.mult2_opb(0) := rec.min1_output(1);
-			 var.mult2_opa(0) := rec.min1_output(2); --(P.y - V0.y)*(V1.x - V0.x)
-			 var.mult2_opb(0) := rec.min1_output(3);
+			 var.mult2_opa(1) := rec.min1_output(2); --(P.y - V0.y)*(V1.x - V0.x)
+			 var.mult2_opb(1) := rec.min1_output(3);
 			 mult2_start <= '1';
 			 var.mult2_ready := (others => '0');
 			 var.min1_buf_free := '1';
@@ -201,11 +206,12 @@ begin
 		if (min3_ready = '1' and rec.min3_ready = '0') then
 			var.min3_ready := '1';
 			var.min3_output := min3_output;
+
+			var.result_ready := '1';
 		end if;
 
 		result_o <= var.min3_output;
-		input_ready_o <= var.mult2_ready(1) and var.mult2_ready(0);
-		result_ready_o <= var.min3_ready;
+		ready_o <= var.result_ready;
 		rec_in <= var;
 	end process;
 

@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Apr  6 20:07:33 2022
--- Last update : Wed Apr  6 20:42:12 2022
+-- Last update : Wed Apr 13 21:23:57 2022
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -42,8 +42,7 @@ architecture testbench of edge_function_dummy_tb is
 	signal clk_i          : std_logic;
 	signal rst_i          : std_logic;
 	signal valid_i        : std_logic;
-	signal input_ready_o  : std_logic;
-	signal result_ready_o : std_logic;
+	signal ready_o : std_logic;
 	signal x_i            : vec32;
 	signal y_i            : vec32;
 	signal v0x_i          : vec32;
@@ -103,10 +102,30 @@ begin
 		wait for clk_period;
 
 		valid_i <= '0';
-		wait until result_ready_o;
+		wait for clk_period;
+		wait until ready_o;
+		wait for clk_period;
 
-		assert result_o = ONE32 report "FAILURE" severity failure;
+		assert result_o = ONE32 report "FAILURE1" severity failure;
 
+		valid_i <= '1'; --(-2 - -1)*(2 - 1) - (1 - 1)*(1 - 1)
+		x_i <= MINUSTWO32;
+		y_i <= ONE32;
+		v0x_i <= MINUSONE32;
+		v0y_i <= ONE32;
+		v1x_i <= ONE32;
+		v1y_i <= TWO32;
+		
+		wait for clk_period;
+
+		valid_i <= '0';
+		wait for clk_period;
+		wait until ready_o;
+		wait for clk_period;
+
+		assert result_o = MINUSONE32 report "FAILURE2" severity failure;
+
+		wait for clk_period*5;
 		assert false report "SUCCESS" severity failure;
 		wait;
 	end process;
@@ -119,8 +138,7 @@ begin
 			clk_i          => clk_i,
 			rst_i          => rst_i,
 			valid_i        => valid_i,
-			input_ready_o  => input_ready_o,
-			result_ready_o => result_ready_o,
+			ready_o => ready_o,
 			x_i            => x_i,
 			y_i            => y_i,
 			v0x_i          => v0x_i,
