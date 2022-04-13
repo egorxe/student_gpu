@@ -52,11 +52,15 @@ signal ack_in   : std_logic := '1';
 
 signal clk      : std_logic := '0';
 signal rst      : std_logic := '1';
+
+signal counter  : integer   :=  0;
+signal clikcounter : integer := 0;
 -- signal ack_in   : std_logic := '1';
 begin
 
 clk <= not clk after CLK_PERIOD/2;
 rst <= '0' after CLK_PERIOD*10;
+ack_in <= '1';
 
 tv : fragment_ops
     generic map (
@@ -85,16 +89,27 @@ process(clk)
     file f_out          : BinaryFile;
 begin
     if Rising_edge(clk) then
-        -- ack_in <= not ack_in;
-        -- report "ack_in " & std_logic'image(ack_in);
-        -- report "stb_out " & std_logic'image(stb_out);
+        
         if rst = '1' then
             if fstatus = STATUS_ERROR then
                 -- open output file once
                 file_open(fstatus, f_out, OUT_FIFO_NAME, WRITE_MODE);
             end if;
         else
-            -- report "ack_in " & std_logic'image(ack_in);
+
+            if counter > 64 then
+                -- report "clik" & integer'image(clikcounter);
+                clikcounter <= clikcounter + 1;
+                ack_in <= '1';
+                counter <= 0;
+            elsif counter > 32 then
+                ack_in <= '0';
+                counter <= counter + 1;
+            else
+                ack_in <= '1';
+                counter <= counter + 1;
+            end if;
+
             if (stb_out = '1') and (ack_in = '1') then
                 WriteUint32(f_out, data_out);
                 if (data_out = GPU_PIPE_CMD_FRAME_END) then
@@ -119,7 +134,8 @@ begin
                 file_open(fstatus, f_in, IN_FIFO_NAME, READ_MODE);
             end if;
         else
-            -- report "ack_o " & std_logic'image(ack_out);
+            report "ack_o " & std_logic'image(ack_out);
+            report "stb_i " & std_logic'image(stb_in);
             if (ack_out = '1') then
                 ReadUint32(f_in, datainbuff);
                 -- report "read " & to_hstring(datainbuff);

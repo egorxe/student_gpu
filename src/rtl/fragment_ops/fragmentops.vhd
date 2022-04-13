@@ -44,11 +44,15 @@ begin
   begin
     if Rising_edge(clk_i) then
       stb_o <= '1';
-      ack_o <= '1';
+      ack_o <= '0';
       case state is
         when IDLE =>
-          if stb_i = '1' then
-            -- report "IDLE";
+          if ack_i = '1' then
+            ack_o <= '1';
+          end if; 
+          -- report "IDLE";
+          if stb_i = '1' and ack_o = '1' then
+            report "IDLE";
             cmd := data_i;
             -- report "data_i " & to_hstring(data_i);
             i := 0;
@@ -70,18 +74,19 @@ begin
           end if;
 
         when SENT_ZERO =>
-        -- report "SENT_ZERO";
+        report "SENT_ZERO";
           if ack_i = '1' then
             data_o <= ZERO32;
             -- stb_o <= '1';
             state := Z_TO_ZERO;
-          else
-            stb_o <= '0';
+            report "Z_TO_ZERO_start";
+          -- else
+          --   stb_o <= '0';
           end if;
-          ack_o <= '0';
+          -- ack_o <= '0';
 
         when Z_TO_ZERO =>
-          ack_o <= '0';
+          -- ack_o <= '0';
           if i < SCREEN_WIDTH then
             if j < SCREEN_HEIGHT then
               depth_buffer(i * SCREEN_HEIGHT + j) <= PIPELINE_MAX_Z;
@@ -91,25 +96,29 @@ begin
               i := i+1;
             end if;
           else
-            ack_o <= '1';
+            if ack_i = '1' then
+              ack_o <= '1';
+            end if;
             state := IDLE;
             report "Z_TO_ZERO_end";
           end if;
           stb_o <= '0';
         
         when XREAD =>
-        -- report "XREAD";
+        report "XREAD";
           if stb_i = '1' then
             x <= data_i;
             state := YREAD;
+            -- ack_o <= '0';
           end if;
           stb_o <= '0';
 
         when YREAD =>
-        -- report "YREAD";
+        report "YREAD";
           if stb_i = '1' then
             y <= data_i;
             state := ZREAD;
+            -- ack_o <= '0';
           end if;
           stb_o <= '0';
 
@@ -118,32 +127,35 @@ begin
           if stb_i = '1' then
             z <= data_i;
             state := COLORREAD;
-            ack_o <= '0';
+            -- ack_o <= '0';
           end if;
           stb_o <= '0';
 
         when COLORREAD =>
-        -- report "COLORREAD";
+        report "COLORREAD";
         -- report "stb_i " & std_logic'image(stb_i);
           if stb_i = '1' then
             color <= data_i;
             state := CHECK;
-            ack_o <= '0';
+            -- ack_o <= '0';
           end if;
           stb_o <= '0';
 
         when CHECK =>
-        -- report "CHECK";
+        report "CHECK";
         -- report to_hstring(x);
         -- report to_hstring(y);
         -- report to_hstring(z);
           if z >= depth_buffer(to_uint(x) * SCREEN_HEIGHT + to_uint(y)) then
+            report "FRAME END";
             state := IDLE;
-            ack_o <= '1';
+            if ack_i = '1' then
+              ack_o <= '1';
+            end if;
           else
             depth_buffer(to_sint(x) * SCREEN_HEIGHT + to_sint(y)) <= z;
             state := XYOUT;
-            ack_o <= '0';
+            -- ack_o <= '0';
           end if;
           stb_o <= '0';
           
@@ -152,19 +164,19 @@ begin
           if ack_i = '1' then
             data_o <= x or (y sll 16);
             state := COLOROUT;
-          else
-            stb_o <= '0';
+          -- else
+          --   stb_o <= '0';
           end if;
-          ack_o <= '0';
+          -- ack_o <= '0';
         when COLOROUT =>
         -- report "COLOROUT";
           if ack_i = '1' then
             data_o <= color;
             state := IDLE;
-          else
-            stb_o <= '0';
+          -- else
+          --   stb_o <= '0';
           end if;
-          ack_o <= '0';
+          -- ack_o <= '0';
       end case;
     end if;
 
