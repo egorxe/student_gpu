@@ -17,12 +17,11 @@ entity fragment_ops is
     
     data_i      : in  vec32;
     stb_i       : in  std_logic;
+    ack_o       : out std_logic;
     
     data_o      : out vec32;
     stb_o       : out std_logic;
-
-    ack_o       : out std_logic;
-    rdr_o       : out std_logic
+    ack_i       : in  std_logic
   );
 end fragment_ops;
 
@@ -44,9 +43,8 @@ begin
   variable j          : integer;
   begin
     if Rising_edge(clk_i) then
-      ack_o <= '0'; 
-      stb_o <= '0';
-      rdr_o <= '1';
+      stb_o <= '1';
+      ack_o <= '1';
       case state is
         when IDLE =>
           if stb_i = '1' then
@@ -57,27 +55,33 @@ begin
             j := 0;
             -- report "cmd " & to_hstring(cmd);
             if not(cmd = GPU_PIPE_CMD_FRAGMENT) then
-              data_o <= cmd;
-              stb_o <= '1';
-              rdr_o <= '0';
-              state := SENT_ZERO;
+              if ack_i = '1' then
+                data_o <= cmd;
+                state := SENT_ZERO;
+              end if;
+              ack_o <= '0';
               -- report "FRAME";
             else
+              stb_o <= '0';
               state := XREAD;
             end if;
-            -- stb_o 
-            ack_o <= '1';  
+          else
+            stb_o <= '0'; 
           end if;
 
         when SENT_ZERO =>
         -- report "SENT_ZERO";
-          data_o <= ZERO32;
-          stb_o <= '1';
-          rdr_o <= '0';
-          state := Z_TO_ZERO;
+          if ack_i = '1' then
+            data_o <= ZERO32;
+            -- stb_o <= '1';
+            state := Z_TO_ZERO;
+          else
+            stb_o <= '0';
+          end if;
+          ack_o <= '0';
 
         when Z_TO_ZERO =>
-          rdr_o <= '0';
+          ack_o <= '0';
           if i < SCREEN_WIDTH then
             if j < SCREEN_HEIGHT then
               depth_buffer(i * SCREEN_HEIGHT + j) <= PIPELINE_MAX_Z;
@@ -87,42 +91,46 @@ begin
               i := i+1;
             end if;
           else
-            rdr_o <= '1';
+            ack_o <= '1';
             state := IDLE;
-            -- report "Z_TO_ZERO_end";
+            report "Z_TO_ZERO_end";
           end if;
+          stb_o <= '0';
         
         when XREAD =>
         -- report "XREAD";
           if stb_i = '1' then
             x <= data_i;
             state := YREAD;
-            ack_o <= '1';
           end if;
+          stb_o <= '0';
+
         when YREAD =>
         -- report "YREAD";
           if stb_i = '1' then
             y <= data_i;
             state := ZREAD;
-            ack_o <= '1';
           end if;
+          stb_o <= '0';
+
         when ZREAD =>
         -- report "ZREAD";
           if stb_i = '1' then
             z <= data_i;
             state := COLORREAD;
-            ack_o <= '1';
-            rdr_o <= '0';
+            ack_o <= '0';
           end if;
+          stb_o <= '0';
+
         when COLORREAD =>
         -- report "COLORREAD";
         -- report "stb_i " & std_logic'image(stb_i);
           if stb_i = '1' then
             color <= data_i;
             state := CHECK;
-            rdr_o <= '0';
-            ack_o <= '1';
+            ack_o <= '0';
           end if;
+          stb_o <= '0';
 
         when CHECK =>
         -- report "CHECK";
@@ -131,25 +139,32 @@ begin
         -- report to_hstring(z);
           if z >= depth_buffer(to_uint(x) * SCREEN_HEIGHT + to_uint(y)) then
             state := IDLE;
-            rdr_o <= '1';
+            ack_o <= '1';
           else
             depth_buffer(to_sint(x) * SCREEN_HEIGHT + to_sint(y)) <= z;
             state := XYOUT;
-            rdr_o <= '0';
+            ack_o <= '0';
           end if;
+          stb_o <= '0';
           
         when XYOUT =>
         -- report "XYOUT";
-          data_o <= x or (y sll 16);
-          stb_o <= '1';
-          rdr_o <= '0';
-          state := COLOROUT;
+          if ack_i = '1' then
+            data_o <= x or (y sll 16);
+            state := COLOROUT;
+          else
+            stb_o <= '0';
+          end if;
+          ack_o <= '0';
         when COLOROUT =>
         -- report "COLOROUT";
-          data_o <= color;
-          stb_o <= '1';
-          -- rdr_o <= '0';
-          state := IDLE;
+          if ack_i = '1' then
+            data_o <= color;
+            state := IDLE;
+          else
+            stb_o <= '0';
+          end if;
+          ack_o <= '0';
       end case;
     end if;
 

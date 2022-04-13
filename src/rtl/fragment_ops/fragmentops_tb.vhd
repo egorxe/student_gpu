@@ -31,12 +31,12 @@ component fragment_ops is
         
         data_i      : in  vec32;
         stb_i       : in  std_logic;
+        ack_o       : out std_logic;
         
         data_o      : out vec32;
         stb_o       : out std_logic;
+        ack_i       : in  std_logic
 
-        ack_o       : out std_logic;
-        rdr_o       : out std_logic
     );
 end component;
 
@@ -46,13 +46,13 @@ signal data_in  : vec32;
 signal data_out : vec32;
 
 signal stb_out  : std_logic;
-signal stb_in   : std_logic;
+signal stb_in   : std_logic := '1';
 signal ack_out  : std_logic;
-signal rdr_out  : std_logic;
+signal ack_in   : std_logic := '1';
 
 signal clk      : std_logic := '0';
 signal rst      : std_logic := '1';
-
+-- signal ack_in   : std_logic := '1';
 begin
 
 clk <= not clk after CLK_PERIOD/2;
@@ -69,12 +69,11 @@ tv : fragment_ops
         
         data_i      => data_in,
         stb_i       => stb_in,
+        ack_o       => ack_out,
         
         data_o      => data_out,
         stb_o       => stb_out,
-
-        ack_o       => ack_out,
-        rdr_o       => rdr_out
+        ack_i       => ack_in
     );
     
 
@@ -86,13 +85,17 @@ process(clk)
     file f_out          : BinaryFile;
 begin
     if Rising_edge(clk) then
+        -- ack_in <= not ack_in;
+        -- report "ack_in " & std_logic'image(ack_in);
+        -- report "stb_out " & std_logic'image(stb_out);
         if rst = '1' then
             if fstatus = STATUS_ERROR then
                 -- open output file once
                 file_open(fstatus, f_out, OUT_FIFO_NAME, WRITE_MODE);
             end if;
         else
-            if (stb_out = '1') then
+            -- report "ack_in " & std_logic'image(ack_in);
+            if (stb_out = '1') and (ack_in = '1') then
                 WriteUint32(f_out, data_out);
                 if (data_out = GPU_PIPE_CMD_FRAME_END) then
                     flush(f_out);
@@ -116,8 +119,8 @@ begin
                 file_open(fstatus, f_in, IN_FIFO_NAME, READ_MODE);
             end if;
         else
-            -- report "rdr_o " & std_logic'image(rdr_out);
-            if (rdr_out = '1') then
+            -- report "ack_o " & std_logic'image(ack_out);
+            if (ack_out = '1') then
                 ReadUint32(f_in, datainbuff);
                 -- report "read " & to_hstring(datainbuff);
                 data_in <= datainbuff;
