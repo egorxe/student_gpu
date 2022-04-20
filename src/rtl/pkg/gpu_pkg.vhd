@@ -47,6 +47,8 @@ package gpu_pkg is
     type M44 is array (0 to 3) of V4;
     type FV4 is array (0 to 3) of float32;
     type FM44 is array (0 to 3) of FV4;
+
+    subtype vecaxisdata is std_logic_vector(GLOBAL_AXIS_DATA_WIDTH - 1 downto 0);
     
     type rast_vertex is record
         x : float32;
