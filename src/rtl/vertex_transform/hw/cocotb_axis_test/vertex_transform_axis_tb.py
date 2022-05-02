@@ -6,9 +6,10 @@ from cocotbext.axi import AxiStreamBus, AxiStreamSource, AxiStreamSink, AxiStrea
 import struct
 import numpy as np
 import ctypes as ct
+import random as rnd
 
 #parameters
-POLYGONS_TO_SEND = 1
+TESTS_AMOUNT = 3
 
 #configuration
 WRD_P_PLGN = 22
@@ -40,11 +41,11 @@ class Polygon:
 def float32ToBin32Str(num):
     return ''.join('{:0>8b}'.format(c) for c in struct.pack('!f', num)) #empty bits equal 0, alignement to the right border, 8-bits width
 
-def int8ToBin32Str(num):
+def intToBin32Str(num):
     return ''.join('{:0>8b}'.format(c) for c in struct.pack('!i', num))
 
 #pyFloat and int (actually double in C terms) to signal
-def floatToSignal32(num):
+def float32ToSignal32(num):
     return int(float32ToBin32Str(num), 2)
 
 #signal to pyFloat (actually double in C terms)
@@ -66,7 +67,7 @@ def bin64StrToFloat64(value):
 
 #signal - float32 as int
 def signal32ToFloat64(value):
-    return bin64StrToFloat64(bin32StrToBin64Str(float32ToBin32Str(value)))
+    return bin64StrToFloat64(bin32StrToBin64Str(intToBin32Str(value)))
 
 #for AXI-Stream
 def intToBytes(i):
@@ -88,9 +89,9 @@ class Vt_axi_tester:
 		self.dut = dut;
 		self.received_frames = 0
 		self.received_words = 0
-		self.sent_data = []
-		self.received_data = [] 
-		self.sent_point = (ct.c_float * 3)()
+		self.sent_data = [] #float as signal32
+		self.received_data = [] #float as signal32
+		self.sent_point = (ct.c_float * 3)() 
 		self.processed_point = (ct.c_float * 4)()
 		
 		cocotb.start_soon(Clock(dut.clk_i, 10, units = "ns").start())
@@ -116,7 +117,7 @@ class Vt_axi_tester:
 		print(intToBytes(data), "was sent")
 
 	async def sendFloat(self, data):
-		await self.sendSignal32(floatToSignal32(data))
+		await self.sendSignal32(float32ToSignal32(data))
 
 	async def sendVertice(self, point):
 		await self.sendFloat(point.x)
@@ -142,8 +143,8 @@ class Vt_axi_tester:
 			byte_num = 0
 			
 			for byte in frame:
-				wordAsStr = (int8ToBin32Str(byte))[24:32] + wordAsStr #order matters
-				print(int8ToBin32Str(byte)[24:32])
+				wordAsStr = (intToBin32Str(byte))[24:32] + wordAsStr #order matters
+				print(intToBin32Str(byte)[24:32])
 				byte_num += 1
 
 				if (byte_num % BYTES_PER_WORD == 0):
@@ -154,30 +155,33 @@ class Vt_axi_tester:
 					wordAsStr =  ""
 
 			self.received_frames += 1
-			print(frame, "was received,", self.received_frames, "frames were received at all")
+			print(frame, "was received,", self.received_frames, "frames were received at all,", self.received_frames//4, "polygons were received at all")
 
 	async def checkReception(self):
-		vertex_transform = ct.CDLL('../hw/cocotb_axis_test/vertex_transform.so')
+		vertex_transform = ct.CDLL('../hw/cocotb_axis_test/vertex_transform_cube.so')
 		process_vertex = vertex_transform.process_vertex
 		process_vertex.argtypes= [ct.POINTER(ct.c_float), ct.POINTER(ct.c_float)]
 
-		while self.received_words < POLYGONS_TO_SEND*WRD_P_WPLGN: #1 + 8*3
+		while self.received_words < TESTS_AMOUNT*WRD_P_WPLGN: #1 + 8*3
 			await RisingEdge(self.dut.clk_i)
 
-		for polyCnt in range(POLYGONS_TO_SEND):
+		#polygons checking 
+		for polyCnt in range(TESTS_AMOUNT):
 			print("Polygon", polyCnt)
 			print("Start code expected", hex(GPU_PIPE_CMD_POLY_VERTEX), "received", hex(self.received_data[polyCnt*WRD_P_WPLGN]))
 			assert self.received_data[polyCnt*WRD_P_WPLGN] == GPU_PIPE_CMD_POLY_VERTEX, "GPU_PIPE_CMD_POLY_VERTEX wasn't transmitted"
 
+			#points checking
 			for pointCnt in range(3):
 				print("Point", pointCnt)
 				for i in range(3):
-					self.sent_point[i] = (ct.c_float)(self.sent_data[i + WRD_P_VRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt])
+					self.sent_point[i] = (ct.c_float)(signal32ToFloat64(self.sent_data[i + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt]))
 				
 				#vertices processing in C code
 				process_vertex(ct.cast(self.sent_point, ct.POINTER(ct.c_float)), 
 								ct.cast(self.processed_point, ct.POINTER(ct.c_float)))
 					
+				#coordinates checking
 				for i in range(4):
 					print("coordinate", 
 							i, 
@@ -186,28 +190,60 @@ class Vt_axi_tester:
 							hex(self.received_data[i + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]), 
 							"expected", 
 							self.processed_point[i],
-							hex(floatToSignal32(self.processed_point[i]))
+							hex(float32ToSignal32(self.processed_point[i]))
 							)
-					#assert self.received_data[i + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt] == floatToSignal32(self.processed_point[i]), "Answers are different"
+					assert self.received_data[i + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt] == \
+							float32ToSignal32(self.processed_point[i]), \
+							"Answers are different"
 
+				#colors checking
 				for i in range(4):
-					print("color", i,
-							"got", hex(self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]),
-							"expected", hex(self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt]))
-					#assert self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt] == self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt], "Answers are different"
+					print("color", 
+							i,
+							"got", 
+							signal32ToFloat64(self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]),
+							hex(self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt]),
+							"expected", 
+							signal32ToFloat64(self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt]),
+							hex(self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt]))
+					assert self.received_data[i + 4 + WRD_P_WVRTX*pointCnt + 1 + WRD_P_WPLGN*polyCnt] == \
+							self.sent_data[i + 3 + WRD_P_VRTX*pointCnt + 1 + WRD_P_PLGN*polyCnt], \
+							"Answers are different"
+
+				print("");
+
+			print("Test of polygon number", polyCnt + 1, "from", TESTS_AMOUNT, "is complete\n")
+
+def randPoint(magnitude):
+	return Point((rnd.random()*2 - 1)*magnitude, 
+				(rnd.random()*2 - 1)*magnitude, 
+				(rnd.random()*2 - 1)*magnitude, 
+				(rnd.random()*2 - 1)*magnitude, 
+				(rnd.random()*2 - 1)*magnitude, 
+				(rnd.random()*2 - 1)*magnitude, 
+				(rnd.random()*2 - 1)*magnitude)
 
 #testbench
 @cocotb.test()
 async def testbech(dut):
+	rnd.seed()
+
 	tester = Vt_axi_tester(dut)
-	point = Point(1, 1, 1, 2, 2, 2, 2)
-	polygon = Polygon(point, point, point)
 
 	await tester.reset()
 
 	cocotb.start_soon(tester.startReception())
 	
-	for i in range(POLYGONS_TO_SEND):
+	# points = []
+	for i in range(TESTS_AMOUNT):
+		# for j in range(3):
+		# 	points.append(randPoint(10))
+		# polygon = Polygon(points[0], points[1], points[2])
+
+		point = Point(i, i, i, i, i, i, i)
+		polygon = Polygon(point, point, point)
 		await tester.sendPolygon(polygon)
+
+		# points = []
 
 	await tester.checkReception();

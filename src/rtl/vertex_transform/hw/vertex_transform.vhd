@@ -92,7 +92,7 @@ architecture rtl of vertex_transform is
 	--constant model_matrix : M44 := (
 	--	(to_slv(1.0), to_slv(0.0), to_slv(0.0), to_slv(0.0)),
 	--	(to_slv(0.0), to_slv(1.0), to_slv(0.0), to_slv(0.0)),
-	--	(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(-3.0)),
+	--	(to_slv(0.0), to_slv(0.0), to_slv(1.0), to_slv(0.0)),
 	--	(to_slv(0.0), to_slv(0.0), to_slv(0.0), to_slv(1.0))
 	--	);
 

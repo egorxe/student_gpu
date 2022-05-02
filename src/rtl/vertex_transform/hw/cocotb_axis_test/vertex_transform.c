@@ -1,5 +1,6 @@
 #include <stdlib.h> 
 #include <string.h>
+#include <stdio.h>
 
 // Custom typedefs ------------------------------------------------------
 
@@ -26,19 +27,33 @@ struct M4 {
 //         {0, 0, 0, 1},
 //     }};
 
+// struct M4 model_matrix = {{
+//         {1,         0,          0,          0           },
+//         {0,         1,          0,          0           },
+//         {0,         0,          1,          -3.0        },  
+//         {0,         0,          0,          1           },
+//     }};
+
+// struct M4 proj_matrix = {{
+//         {1.810660,  0,          0,          0           },
+//         {0,         2.414214,   0,          0           },
+//         {0,         0,          -1.020202,  -0.202020   },
+//         {0,         0,          -1.000000,  0           },
+//     }};
+
 struct M4 model_matrix = {{
-        {1,         0,          0,          0           },
-        {0,         1,          0,          0           },
-        {0,         0,          1,          -3.0        },  
-        {0,         0,          0,          1           },
-    }};
+            {0.804738,  -0.310617,  0.505879,   0.0},
+            {0.505879,  0.804738,   -0.310617,  0.0},
+            {-0.310617, 0.505879,   0.804738,   -3.0},
+            {0.0,       0.0,        0.0,        1.0},
+        }};
 
 struct M4 proj_matrix = {{
-        {1.810660,  0,          0,          0           },
-        {0,         2.414214,   0,          0           },
-        {0,         0,          -1.020202,  -0.202020   },
-        {0,         0,          -1.000000,  0           },
-    }};
+            {1.810660,  0.0,        0.0,        0.0},
+            {0.0,       2.414214,   0.0,        0.0},
+            {0.0,       0.0,        -1.020202,  -0.202020},
+            {0.0,       0.0,        -1.000000,  0.0},
+        }};
 
 int SCREEN_WIDTH = 640;
 int SCREEN_HEIGHT = 480;
@@ -72,15 +87,30 @@ void ViewportTransform(Vec4 s, float *d, int size_x, int size_y)
     d[3] = s[3];    // we will need w clip coord during rasterization for perspective correct vertex attribute (color) calculations
 }
 
+void OutputVec4(Vec4 v) {
+    int i = 0;
+    printf("{");
+    for (i = 0; i < 3; ++i) printf("%f, ", v[i]);
+    printf("%f}\n", v[3]);
+}
+
 // Vertex to display coords ------------------------------------------------
 
 void process_vertex(float *vert_in, float *vert_out)
 {
     Vec4 vert_vec4 = {vert_in[0], vert_in[1], vert_in[2], 1};
+    printf("Creation: ");
+    OutputVec4(vert_vec4);
+
     // multiply on model matrix
     gl_M4_MulV4(vert_vec4, &model_matrix, vert_vec4);
+    printf("Model matrix: ");
+    OutputVec4(vert_vec4);
+
     // multiply on projection matrix
     gl_M4_MulV4(vert_vec4, &proj_matrix, vert_vec4);
+    printf("Projection matrix: ");
+    OutputVec4(vert_vec4);
     
     // ###TODO: clipping should be done here
     
@@ -88,6 +118,10 @@ void process_vertex(float *vert_in, float *vert_out)
     vert_vec4[0] = vert_vec4[0]/vert_vec4[3];
     vert_vec4[1] = vert_vec4[1]/vert_vec4[3];
     vert_vec4[2] = vert_vec4[2]/vert_vec4[3];
+    printf("Normalizing: ");
+    OutputVec4(vert_vec4);
 
     ViewportTransform(vert_vec4, vert_out, SCREEN_WIDTH, SCREEN_HEIGHT);
+    printf("Veiwport transform: ");
+    OutputVec4(vert_out);
 }
