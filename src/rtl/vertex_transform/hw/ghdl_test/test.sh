@@ -3,7 +3,7 @@
 set -e
 
 # Write your sources here (order is resolved automaticaly)
-TOP="vertex_transform_trivial_tb"
+TOP="vertex_transform_axis_type_wrapper_tb" #"vertex_transform_trivial_tb"
 SOURCES_BASEPATH=".."
 SOURCES="../../pkg/*.vhd */*.vhd *.vhd"
 
