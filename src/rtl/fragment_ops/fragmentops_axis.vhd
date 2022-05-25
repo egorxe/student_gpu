@@ -16,11 +16,11 @@ entity fragment_ops_axis is
         clk_i       : in  std_logic;
         rst_i       : in  std_logic;
         
-        axistready_out    : in global_axis_miso_type; --ready
-        axistire_out      : out global_axis_mosi_type; --data
+        axistready_o    : in global_axis_miso_type; --ready
+        axistire_o      : out global_axis_mosi_type; --data
         
-        axistready_in     : out global_axis_miso_type; --ready
-        axistire_in       : in global_axis_mosi_type --data
+        axistready_i     : out global_axis_miso_type; --ready
+        axistire_i       : in global_axis_mosi_type --data
     );
 end fragment_ops_axis;
 
@@ -42,35 +42,35 @@ begin
 
     begin
         if Rising_edge(clk_i) then
-            axistready_in.axis_tready <= '0';
-            axistire_out.axis_tvalid <= '0';
-            axistire_out.axis_tlast <= '0';
+            axistready_i.axis_tready <= '0';
+            axistire_o.axis_tvalid <= '0';
+            axistire_o.axis_tlast <= '0';
             case state is
                 when IDLE =>
-                if axistire_in.axis_tvalid = '1' then
-                    cmd := axistire_in.axis_tdata;
+                if axistire_i.axis_tvalid = '1' then
+                    cmd := axistire_i.axis_tdata;
                     i := 0;
                     j := 0;
                     if not(cmd = GPU_PIPE_CMD_FRAGMENT) then
-                        if axistready_out.axis_tready = '1' then
-                            axistire_out.axis_tdata <= cmd;
+                        if axistready_o.axis_tready = '1' then
+                            axistire_o.axis_tdata <= cmd;
                             state := SENT_ZERO;
                         end if;
                         -- ack_o <= '0';
                         -- report "FRAME";
                     else
                         -- stb_o <= '0';
-                        axistready_in.axis_tready <= '1';
+                        axistready_i.axis_tready <= '1';
                         state := XREAD;
                     end if;
                 else
-                    axistready_in.axis_tready <= '1';
+                    axistready_i.axis_tready <= '1';
                 end if;
 
                 when SENT_ZERO =>
-                if axistready_out.axis_tready = '1' then
-                    axistire_out.axis_tdata <= (others => '0');
-                    axistire_out.axis_tvalid <= '1';
+                if axistready_o.axis_tready = '1' then
+                    axistire_o.axis_tdata <= (others => '0');
+                    axistire_o.axis_tvalid <= '1';
                     state := Z_TO_ZERO;
                 end if;
 
@@ -84,40 +84,40 @@ begin
                         i := i+1;
                     end if;
                 else
-                    axistready_in.axis_tready <= '1';
+                    axistready_i.axis_tready <= '1';
                     state := IDLE;
                 end if;
 
                 when XREAD =>
-                if axistire_in.axis_tvalid = '1' then
-                    x <= axistire_in.axis_tdata;
-                    axistready_in.axis_tready <= '1';
+                if axistire_i.axis_tvalid = '1' then
+                    x <= axistire_i.axis_tdata;
+                    axistready_i.axis_tready <= '1';
                     state := YREAD;
                 end if;
 
                 when YREAD =>
-                if axistire_in.axis_tvalid = '1' then
-                    y <= axistire_in.axis_tdata;
-                    axistready_in.axis_tready <= '1';
+                if axistire_i.axis_tvalid = '1' then
+                    y <= axistire_i.axis_tdata;
+                    axistready_i.axis_tready <= '1';
                     state := ZREAD;
                 end if;
                 
                 when ZREAD =>
-                if axistire_in.axis_tvalid = '1' then
-                    z <= axistire_in.axis_tdata;
-                    axistready_in.axis_tready <= '1';
+                if axistire_i.axis_tvalid = '1' then
+                    z <= axistire_i.axis_tdata;
+                    axistready_i.axis_tready <= '1';
                     state := COLORREAD;
                 end if;
                 
                 when COLORREAD =>
-                if axistire_in.axis_tvalid = '1' then
-                    color <= axistire_in.axis_tdata;
+                if axistire_i.axis_tvalid = '1' then
+                    color <= axistire_i.axis_tdata;
                     state := CHECK;
                 end if;
                 
                 when CHECK =>
                 if z >= depth_buffer(to_uint(x) * SCREEN_HEIGHT + to_uint(y)) then
-                    axistready_in.axis_tready <= '1';
+                    axistready_i.axis_tready <= '1';
                     state := IDLE;
                 else
                     depth_buffer(to_sint(x) * SCREEN_HEIGHT + to_sint(y)) <= z;
@@ -126,15 +126,15 @@ begin
                 end if;
 
                 when XYOUT =>
-                if axistready_out.axis_tready = '1' then
-                    axistire_out.axis_tdata <= x or (y sll GLOBAL_AXIS_DATA_WIDTH/2);
+                if axistready_o.axis_tready = '1' then
+                    axistire_o.axis_tdata <= x or (y sll GLOBAL_AXIS_DATA_WIDTH/2);
                     state := COLOROUT;
                 end if;
 
                 when COLOROUT =>
-                if axistready_out.axis_tready = '1' then
-                    axistire_out.axis_tdata <= color;
-                    axistready_in.axis_tready <= '1';
+                if axistready_o.axis_tready = '1' then
+                    axistire_o.axis_tdata <= color;
+                    axistready_i.axis_tready <= '1';
                     state := IDLE;
                 end if;
             end case;
