@@ -18,11 +18,11 @@ entity frame_buffer is
 			valid_i : in std_logic;
 			ready_o : out std_logic;
 
-			xVGA : in integer;
-			yVGA : in integer;
-			colorVGA : out vec32;
+			xVGA_i : in integer;
+			yVGA_i : in integer;
+			colorVGA_o : out vec32; --will be ready for the 2nd rising edge after alternation of xVGA_i or yVGA_i
 
-			coordsError : out std_logic --debug signal
+			coordsError_o : out std_logic --debug signal
 		);
 end entity frame_buffer;
 
@@ -35,7 +35,7 @@ architecture arch of frame_buffer is
 	signal module_state : module_state_type := coords;
 
 	signal bufferSelector : std_logic := '0';
-	signal xInput, yInput, verticeCnt, xVGABoxed, yVGABoxed : integer := 0; 
+	signal xInput, yInput, verticeCnt, xVGA_iBoxed, yVGA_iBoxed : integer := 0; 
 begin
 
 	sync : process (clk_i)
@@ -48,11 +48,11 @@ begin
 				ready_o <= '0';
 
 			else
-				coordsError <= '0';
+				coordsError_o <= '0';
 				ready_o <= '1';
 
-				colorVGA <= frame_buffer0(yVGABoxed)(xVGABoxed) when bufferSelector /= '0' else
-						 frame_buffer1(yVGABoxed)(xVGABoxed);
+				colorVGA_o <= frame_buffer0(yVGA_iBoxed)(xVGA_iBoxed) when bufferSelector /= '0' else
+						 frame_buffer1(yVGA_iBoxed)(xVGA_iBoxed);
 
 				if (valid_i = '1') then
 					case (module_state) is
@@ -72,10 +72,10 @@ begin
 							end case;
 
 							verticeCnt <= verticeCnt + 1;
-							coordsError <= '0';
+							coordsError_o <= '0';
 						
 						else 
-							coordsError <= '1';
+							coordsError_o <= '1';
 						end if;
 
 						if (verticeCnt = SCREEN_WIDTH*SCREEN_HEIGHT - 1) then
@@ -89,7 +89,7 @@ begin
 		end if;
 	end process;
 
-	xVGABoxed <= xVGA when xVGA >= 0 and xVGA < SCREEN_WIDTH else 0;
-    yVGABoxed <= yVGA when yVGA >= 0 and yVGA < SCREEN_HEIGHT else 0;
+	xVGA_iBoxed <= xVGA_i when xVGA_i >= 0 and xVGA_i < SCREEN_WIDTH else 0;
+    yVGA_iBoxed <= yVGA_i when yVGA_i >= 0 and yVGA_i < SCREEN_HEIGHT else 0;
 	
 end architecture arch;

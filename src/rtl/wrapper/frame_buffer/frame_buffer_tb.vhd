@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Jun  8 21:25:52 2022
--- Last update : Mon Jun 13 15:31:19 2022
+-- Last update : Mon Jun 13 18:48:22 2022
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -50,9 +50,10 @@ architecture testbench of frame_buffer_tb is
 	signal data_i  : vec32;
 	signal valid_i : std_logic;
 	signal ready_o : std_logic;
-	signal xVGA    : integer;
-	signal yVGA    : integer;
-	signal colorVGA   : vec32;
+	signal xVGA_i    : integer;
+	signal yVGA_i    : integer;
+	signal colorVGA_o   : vec32;
+	signal coordsError_o : std_logic;
 
 	-- Other constants
 	constant C_CLK_PERIOD : time := 10 ns; -- NS
@@ -72,8 +73,8 @@ begin
 	RESET_GEN : process
 	begin
         report "Start!";
-		xVGA <= 0;
-		yVGA <= 0;
+		xVGA_i <= 0;
+		yVGA_i <= 0;
 		valid_i <= '0';
 		data_i <= (others => '0');
 		rst_i <= '1';
@@ -97,15 +98,15 @@ begin
 
 		check_y_loop: for i in 0 to SCREEN_HEIGHT - 1 loop
 			check_x_loop: for j in 0 to SCREEN_WIDTH - 1 loop
-				yVGA <= i;
-				xVGA <= j;
+				yVGA_i <= i;
+				xVGA_i <= j;
 				wait for C_CLK_PERIOD*2;
 
-				assert colorVGA = std_logic_vector(to_unsigned(i, 16)) & std_logic_vector(to_unsigned(j, 16)) 
+				assert colorVGA_o = std_logic_vector(to_unsigned(i, 16)) & std_logic_vector(to_unsigned(j, 16)) 
 				report "FAILURE: x = " & integer'image(j) & 
 						", y = " & integer'image(i) & 
 						", expected color = " & to_hstring(std_logic_vector(to_unsigned(i, 16)) & std_logic_vector(to_unsigned(j, 16))) &
-						", received color = " & to_hstring(colorVGA)
+						", received color = " & to_hstring(colorVGA_o)
 				severity failure;
 			end loop;
 		end loop;
@@ -132,9 +133,10 @@ begin
 			data_i  => data_i,
 			valid_i => valid_i,
 			ready_o => ready_o,
-			xVGA    => xVGA,
-			yVGA    => yVGA,
-			colorVGA   => colorVGA
+			xVGA_i    => xVGA_i,
+			yVGA_i    => yVGA_i,
+			colorVGA_o   => colorVGA_o,
+			coordsError_o => coordsError_o
 		);
 
 end architecture testbench;
