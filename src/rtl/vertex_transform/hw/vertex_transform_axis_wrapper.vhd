@@ -14,12 +14,6 @@ entity vertex_transform_axis_wrapper is
 		clk_i : in std_logic;
 		rst_i : in std_logic;
 
-		--s_axis_i: in global_axis_mosi_type;
-		--s_axis_ready_o : out global_axis_miso_type;
-
-		--m_axis_o: out global_axis_mosi_type;
-		--m_axis_ready_i: in global_axis_miso_type
-
 		s_axis_tdata         : in  std_logic_vector(GLOBAL_AXIS_DATA_WIDTH - 1 downto 0);
         s_axis_tkeep         : in  std_logic_vector(3 downto 0);
         s_axis_tvalid        : in  std_logic;
