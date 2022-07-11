@@ -9,18 +9,18 @@ library ieee;
 use work.gpu_pkg.all;
 use work.file_helper_pkg.all;
 
-entity fragment_ops_tb is
+entity fragment_ops_axis_tb is
     generic (
         SCREEN_WIDTH    : integer   := 640;
         SCREEN_HEIGHT   : integer   := 480;
         IN_FIFO_NAME    : string := "in.fifo";
         OUT_FIFO_NAME   : string := "out.fifo"
     );
-end fragment_ops_tb;
+end fragment_ops_axis_tb;
 
-architecture fileio of fragment_ops_tb is
+architecture fileio_axis of fragment_ops_axis_tb is
 
-component fragment_ops is
+component fragment_ops_axis is
     generic (
         SCREEN_WIDTH    : integer;
         SCREEN_HEIGHT   : integer
@@ -29,26 +29,21 @@ component fragment_ops is
         clk_i       : in  std_logic;
         rst_i       : in  std_logic;
         
-        data_i      : in  vec32;
-        stb_i       : in  std_logic;
-        ack_o       : out std_logic;
+        axistready_o    : in global_axis_miso_type; --ready
+        axistire_o      : out global_axis_mosi_type; --data
         
-        data_o      : out vec32;
-        stb_o       : out std_logic;
-        ack_i       : in  std_logic
-
+        axistready_i     : out global_axis_miso_type; --ready
+        axistire_i       : in global_axis_mosi_type --data
     );
 end component;
 
 constant CLK_PERIOD : time := 10 ns;
 
-signal data_in  : vec32;    
-signal data_out : vec32;
+signal axistready_out   : global_axis_miso_type; --ready
+signal axistire_out     : global_axis_mosi_type; --data
 
-signal stb_out  : std_logic;
-signal stb_in   : std_logic := '1';
-signal ack_out  : std_logic;
-signal ack_in   : std_logic := '1';
+signal axistready_in    : global_axis_miso_type; --ready
+signal axistire_in      : global_axis_mosi_type; --data
 
 signal clk      : std_logic := '0';
 signal rst      : std_logic := '1';
@@ -60,9 +55,8 @@ begin
 
 clk <= not clk after CLK_PERIOD/2;
 rst <= '0' after CLK_PERIOD*10;
-ack_in <= '1';
 
-tv : fragment_ops
+tv : fragment_ops_axis
     generic map (
         SCREEN_WIDTH => SCREEN_WIDTH,
         SCREEN_HEIGHT => SCREEN_HEIGHT
@@ -71,13 +65,10 @@ tv : fragment_ops
         clk_i       => clk,
         rst_i       => rst,
         
-        data_i      => data_in,
-        stb_i       => stb_in,
-        ack_o       => ack_out,
-        
-        data_o      => data_out,
-        stb_o       => stb_out,
-        ack_i       => ack_in
+        axistready_o   => axistready_out,
+        axistire_o     => axistire_out,
+        axistready_i   => axistready_in,  
+        axistire_i     => axistire_in
     );
     
 
@@ -100,19 +91,19 @@ begin
             if counter > 64 then
                 -- report "clik" & integer'image(clikcounter);
                 clikcounter <= clikcounter + 1;
-                ack_in <= '1';
+                axistire_in.axis_tvalid <= '1';
                 counter <= 0;
             elsif counter > 32 then
-                ack_in <= '0';
+                axistire_in.axis_tvalid <= '0';
                 counter <= counter + 1;
             else
-                ack_in <= '1';
+                axistire_in.axis_tvalid <= '1';
                 counter <= counter + 1;
             end if;
 
-            if (stb_out = '1') and (ack_in = '1') then
-                WriteUint32(f_out, data_out);
-                if (data_out = GPU_PIPE_CMD_FRAME_END) then
+            if (axistready_in.axis_tready = '1') and (axistire_in.axis_tvalid = '1') then
+                WriteUint32(f_out, axistire_out.axis_tdata);
+                if (axistire_out.axis_tdata = GPU_PIPE_CMD_FRAME_END) then
                     flush(f_out);
                 end if;
                 -- report "write " & to_hstring(data_out);
@@ -134,18 +125,18 @@ begin
                 file_open(fstatus, f_in, IN_FIFO_NAME, READ_MODE);
             end if;
         else
-            report "ack_o " & std_logic'image(ack_out);
-            report "stb_i " & std_logic'image(stb_in);
-            if (ack_out = '1') then
+            report "ack_o " & std_logic'image(axistready_out.axis_tready);
+            report "stb_i " & std_logic'image(axistire_in.axis_tvalid);
+            if (axistready_out.axis_tready = '1') then
                 ReadUint32(f_in, datainbuff);
                 -- report "read " & to_hstring(datainbuff);
-                data_in <= datainbuff;
-                stb_in <= '1';
+                axistire_in.axis_tdata <= datainbuff;
+                axistire_in.axis_tvalid <= '1';
             else
-                stb_in <= '0';
+                axistire_in.axis_tvalid <= '0';
             end if;
         end if;
     end if;
 end process;
 
-end fileio;
+end fileio_axis;

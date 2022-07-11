@@ -1,24 +1,24 @@
 {
     "display_size_x"    : 640,
     "display_size_y"    : 480,
-    "input_file"        : "",
+    "input_file"        : "gpuin.fifo",
     "stages"            :
     [
         {
             "name"      : "Test vertices generator",
-            "binary"    : "stages/c++/test_vertices/test_vertices"
+            "binary"    : "stages/rtl/test_vertices/ghdl_sim/stage_sim.sh"
         },
         {
             "name"      : "Matrix vertex transformation",
-            "binary"    : "stages/rtl/vertex_transform/hw/ghdl_sim/stage_sim.sh"
+            "binary"    : "stages/c++/vertex_transform/vertex_transform"
         },
         {
             "name"      : "Rasterizer",
             "binary"    : "stages/c++/rasterizer/rasterizer"
         },
         {
-            "name"      : "Fragment operations",
-            "binary"    : "stages/c++/fragment_ops/fragment_ops"
+            "name"      : "Fragment operations rtl",
+            "binary"    : "stages/rtl/fragment_ops/ghdl_sim/stage_sim_axis.sh"
         }
     ]
 }

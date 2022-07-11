@@ -1,0 +1,1 @@
+malt_flow.py -t cocotb-ghdl -l ./hw/cocotb_axis_test/vertex_transform_axis_tb.cocotb.py -d ./cocotbsim

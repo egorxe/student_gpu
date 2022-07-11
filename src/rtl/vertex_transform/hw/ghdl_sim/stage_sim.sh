@@ -27,7 +27,7 @@ for s in $SOURCES ; do
     DIRSOURCES+="$SOURCES_BASEPATH/$s "
 done
 
-PACKAGES_BASEPATH="../../pkg"
+PACKAGES_BASEPATH="../../../pkg"
 DIRPACKAGES=""
 for s in $PACKAGES ; do
     DIRPACKAGES+="$PACKAGES_BASEPATH/$s "

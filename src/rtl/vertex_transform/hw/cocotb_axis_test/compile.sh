@@ -1,0 +1,1 @@
+gcc -shared -Wl,-soname,vertex_transform -o vertex_transform.so -fPIC vertex_transform.c

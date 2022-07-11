@@ -6,7 +6,7 @@
 -- Author      : User Name <user.email@user.company.com>
 -- Company     : User Company Name
 -- Created     : Wed Nov 17 19:06:31 2021
--- Last update : Wed Nov 24 19:04:38 2021
+-- Last update : Thu Feb 24 11:18:26 2022
 -- Platform    : Default Part Number
 -- Standard    : <VHDL-2008 | VHDL-2002 | VHDL-1993 | VHDL-1987>
 --------------------------------------------------------------------------------
@@ -52,10 +52,15 @@ architecture testbench of vertex_transform_trivial_tb is
 		port (
 			clk_i   : in  std_logic;
 			rst_i   : in  std_logic;
+
 			data_i  : in  vec32;
-			read_o  : out std_logic;
+			valid_i : in std_logic; 	--input handshake mechanism
+			ready_o : out std_logic; 	--input handshake mechanism
+
 			data_o  : out vec32;
-			write_o : out std_logic
+			valid_o : out std_logic;  	--output handshake mechanism
+			ready_i : in std_logic; 	--output handshake mechanism
+			last_o : out std_logic 		--only for AXI-Stream wrapper
 		);
 	end component;	
 
@@ -63,10 +68,14 @@ architecture testbench of vertex_transform_trivial_tb is
 	signal clk_i   : std_logic;
 	signal rst_i   : std_logic;
 	signal data_i  : vec32;
-	signal read_o  : std_logic;
+	signal valid_i : std_logic;
+	signal ready_o : std_logic;
 	signal data_o  : vec32;
-	signal write_o : std_logic;
-	signal s_i : integer := 0;
+	signal valid_o : std_logic;
+	signal ready_i : std_logic;
+	signal last_o  : std_logic;
+
+	signal load_cnt : integer := 0;
 
 	constant DATA_AMOUNT : integer := 49;
 	type memory_type is array (0 to DATA_AMOUNT - 1) of vec32;
@@ -135,6 +144,7 @@ architecture testbench of vertex_transform_trivial_tb is
 
 	-- Other constants
 	constant C_CLK_PERIOD : time := 10 ns;
+	constant RST_DELAY : time := 20*C_CLK_PERIOD;
 
 begin
 	-----------------------------------------------------------
@@ -153,22 +163,44 @@ begin
 	-----------------------------------------------------------
 
 	RESET_GEN : process
-		--variable fstatus    : file_open_status := STATUS_ERROR;
-  --  	file f_in          : BinaryFile;
 	begin
 		rst_i <= '1';
-		wait for 20*C_CLK_PERIOD;
+		wait for RST_DELAY;
 		rst_i <= '0';
-		--file_open(fstatus, f_in, OUT_FIFO_NAME, WRITE_MODE);
-		load_loop : for i in 0 to (DATA_AMOUNT - 1) loop
-			wait until read_o = '1';
-			data_i <= memory(i);
-			s_i <= i;
-			--data_i <= ReadUint32(f_in, data_out);
-			wait until read_o = '0';
-		end loop load_loop;
 		wait;
 	end process RESET_GEN;
+
+	load_proc: process
+		--variable fstatus    	: file_open_status := STATUS_ERROR;
+  		--file f_in          	: BinaryFile;
+	begin
+		valid_i <= '0';
+		data_i <= (others => '0');
+		wait for RST_DELAY;
+
+		--file_open(fstatus, f_in, OUT_FIFO_NAME, WRITE_MODE);
+		valid_i <= '1';
+		load_cnt <= 0;
+		data_i <= memory(0);
+		wait until ready_o = '0';
+		load_loop : for i in 1 to (DATA_AMOUNT - 1) loop
+			load_cnt <= i;
+			data_i <= memory(i);
+			--data_i <= ReadUint32(f_in, data_out);
+			wait until ready_o = '1';
+			wait until ready_o = '0';
+		end loop load_loop;
+
+		wait;
+	end process;
+
+	read_proc: process
+	begin
+		ready_i <= '0';
+		wait for RST_DELAY;
+		ready_i <= '1';
+		wait;
+	end process;
 
 	-----------------------------------------------------------
 	-- Entity Under Test
@@ -182,9 +214,12 @@ begin
 			clk_i   => clk_i,
 			rst_i   => rst_i,
 			data_i  => data_i,
-			read_o  => read_o,
+			valid_i => valid_i,
+			ready_o => ready_o,
 			data_o  => data_o,
-			write_o => write_o
-		);
+			valid_o => valid_o,
+			ready_i => ready_i,
+			last_o  => last_o
+		);	
 
 end architecture testbench;
